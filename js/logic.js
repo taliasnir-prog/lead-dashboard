@@ -212,6 +212,23 @@ export function validateLeadForm(input, mode) {
   return { valid: firstInvalid === null, errors, values, firstInvalid };
 }
 
+export const LIMIT_MESSAGE = 'הגעתם למגבלה של 500 לידים. אי אפשר להוסיף ליד חדש, אבל אפשר להמשיך לערוך לידים קיימים.';
+
+/** True while another lead can be added without breaking the 500-lead limit of the stored data. */
+export function canAddLead(leads) {
+  return leads.length < MAX_LEADS;
+}
+
+/**
+ * Adds a lead from validated add-form values, enforcing the limit here and not only in the UI.
+ * Returns { ok: true, leads, lead } with a new array, or { ok: false, leads, error } unchanged.
+ */
+export function addLead(leads, values, today) {
+  if (!canAddLead(leads)) return { ok: false, leads, error: LIMIT_MESSAGE };
+  const lead = createLead(values, leads, today);
+  return { ok: true, leads: [...leads, lead], lead };
+}
+
 /** New stored lead from validated add-form values. */
 export function createLead(values, leads, today) {
   return {

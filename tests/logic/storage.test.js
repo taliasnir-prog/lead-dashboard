@@ -48,7 +48,7 @@ test('AC-10.2 added lead survives a reload and the next id is not duplicated', (
     status: 'חדש', interest: 'בינונית', value: '', followUpDate: '', notes: '',
   }, 'add').values;
   leads = [...leads, createLead(values, leads, TODAY)];
-  assert.equal(saveLeads(storage, leads), true);
+  assert.deepEqual(saveLeads(storage, leads), { ok: true, reason: 'saved' });
   const reloaded = loadLeads(storage, TODAY).leads;
   assert.equal(reloaded.length, 31);
   assert.equal(reloaded.at(-1).id, 'L-031');
@@ -110,12 +110,12 @@ test('AC-10.6 no storage at all (null): demo data in memory', () => {
   const r = loadLeads(null, TODAY);
   assert.equal(r.leads.length, 30);
   assert.deepEqual([r.canRead, r.saved], [false, false]);
-  assert.equal(saveLeads(null, r.leads), false);
+  assert.deepEqual(saveLeads(null, r.leads), { ok: false, reason: 'failed' });
 });
 
-test('AC-10.6 saveLeads returns false when setItem throws, true otherwise', () => {
-  assert.equal(saveLeads(fakeStorage({ failSet: true }), createDemoLeads(TODAY)), false);
-  assert.equal(saveLeads(fakeStorage(), createDemoLeads(TODAY)), true);
+test('AC-10.6 saveLeads reports "failed" when setItem throws, "saved" otherwise', () => {
+  assert.deepEqual(saveLeads(fakeStorage({ failSet: true }), createDemoLeads(TODAY)), { ok: false, reason: 'failed' });
+  assert.deepEqual(saveLeads(fakeStorage(), createDemoLeads(TODAY)), { ok: true, reason: 'saved' });
 });
 
 test('AC-10.6 getStorage returns null when reading window.localStorage throws', () => {

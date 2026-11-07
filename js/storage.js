@@ -19,14 +19,20 @@ export function getStorage(win = globalThis) {
   }
 }
 
-/** Writes { version: 1, leads }. Returns true on success, false on any failure. */
+/**
+ * Writes { version: 1, leads } after checking it with the same rules used when loading.
+ * A value that would fail on the next load is never written, so the last valid value stays.
+ * Returns { ok, reason }: reason is 'saved', 'invalid' (not written) or 'failed' (no storage / write threw).
+ */
 export function saveLeads(storage, leads) {
-  if (!storage) return false;
+  const value = { version: STORAGE_VERSION, leads };
+  if (!validateStoredData(value).valid) return { ok: false, reason: 'invalid' };
+  if (!storage) return { ok: false, reason: 'failed' };
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, leads }));
-    return true;
+    storage.setItem(STORAGE_KEY, JSON.stringify(value));
+    return { ok: true, reason: 'saved' };
   } catch {
-    return false;
+    return { ok: false, reason: 'failed' };
   }
 }
 
@@ -59,10 +65,10 @@ export function loadLeads(storage, today) {
     }
     if (ok) return { leads: parsed.leads, invalid: false, canRead: true, saved: true };
     const leads = createDemoLeads(today);
-    return { leads, invalid: true, canRead: true, saved: saveLeads(storage, leads) };
+    return { leads, invalid: true, canRead: true, saved: saveLeads(storage, leads).ok };
   }
 
   // First load: create the demo data and save it.
   const leads = createDemoLeads(today);
-  return { leads, invalid: false, canRead: true, saved: saveLeads(storage, leads) };
+  return { leads, invalid: false, canRead: true, saved: saveLeads(storage, leads).ok };
 }

@@ -32,6 +32,9 @@
     <p class="notice notice-error" role="alert" hidden data-testid="storage-unavailable">
       לא ניתן לשמור בדפדפן הזה. השינויים לא יישמרו לאחר רענון.
     </p>
+    <p class="notice notice-error" role="alert" hidden data-testid="storage-rejected">
+      השינוי האחרון לא נשמר כי הנתונים לא עברו בדיקת תקינות. הנתונים התקינים האחרונים נשארו שמורים בדפדפן.
+    </p>
 
     <section aria-labelledby="metrics-title" class="section">
       <h2 id="metrics-title">תמונת מצב</h2>
@@ -67,9 +70,11 @@
         <div class="table-actions">
           <button type="button" class="link-button" aria-expanded="false" aria-controls="priority-help"
                   data-testid="priority-help-button">איך נקבע הדירוג?</button>
-          <button type="button" class="primary-button" data-testid="add-lead-button">ליד חדש</button>
+          <button type="button" class="primary-button" data-testid="add-lead-button"
+                  aria-describedby="add-limit">ליד חדש</button>
         </div>
       </div>
+      <p class="notice notice-warning" id="add-limit" hidden data-testid="add-limit"></p>
       <div id="priority-help" class="help" hidden data-testid="priority-help">
         <p>
           הדירוג מחושב מרמת העניין (1 עד 3 נקודות), ממועד המעקב (באיחור 3, היום 2, בלי תאריך או בתוך 3 ימים 1)
@@ -135,6 +140,7 @@
       </header>
 
       <div class="dialog-body">
+        <p class="field-error form-error" role="alert" hidden data-testid="form-error"></p>
         <!-- Edit mode: details that cannot be edited -->
         <dl class="readonly" data-mode="edit" data-testid="readonly-details">
           <div><dt>מזהה</dt><dd data-ro="id"></dd></div>

@@ -4,7 +4,7 @@
 
 import {
   toLocalDateString, computeMetrics, countBySource, sortLeads, filterLeads, getPriority, isOverdue,
-  formatCurrency, formatDate, validateLeadForm, createLead, applyEdit,
+  formatCurrency, formatDate, validateLeadForm, addLead, canAddLead, applyEdit, LIMIT_MESSAGE,
   PRIORITY, STATUSES, SOURCES, REPS, INTEREST_LEVELS, EMPTY_FILTERS, ADD_FIELDS, EDIT_FIELDS,
 } from './logic.js';
 import { createDemoLeads } from './demo-data.js';
@@ -43,19 +43,31 @@ const bdi = (text, attrs) => el('bdi', { text, attrs });
 
 const state = {
   today: '', leads: [], sorted: [],
-  storage: null, canRead: false, saved: false, invalid: false,
+  storage: null, canRead: false, saved: false, invalid: false, rejected: false,
 };
 
 /** Saves the current leads. Never writes when the stored data could not be read. Returns true if saved. */
 function persist() {
-  state.saved = state.canRead ? saveLeads(state.storage, state.leads) : false;
+  const result = state.canRead ? saveLeads(state.storage, state.leads) : { ok: false, reason: 'failed' };
+  state.saved = result.ok;
+  state.rejected = result.reason === 'invalid';
   updateStorageNotices();
   return state.saved;
 }
 
 function updateStorageNotices() {
-  $('storage-unavailable').hidden = state.saved;
+  $('storage-unavailable').hidden = state.saved || state.rejected;
+  $('storage-rejected').hidden = !state.rejected;
   $('storage-invalid').hidden = !state.invalid;
+}
+
+/** At 500 leads the add button is disabled and the limit is explained; editing still works. */
+function updateAddAvailability() {
+  const can = canAddLead(state.leads);
+  $('add-lead-button').disabled = !can;
+  const note = $('add-limit');
+  note.hidden = can;
+  note.textContent = can ? '' : LIMIT_MESSAGE;
 }
 
 /** Replace the whole list (never mutate it) and redraw everything that depends on it. */
@@ -65,6 +77,7 @@ function setLeads(leads) {
   renderMetrics(state.leads);
   renderChart(state.leads);
   renderResults();
+  updateAddAvailability();
 }
 
 // ---------- Cards and chart (always all leads) ----------
@@ -250,6 +263,9 @@ function setupDialogSelects() {
 }
 
 function clearErrors() {
+  const formError = $('form-error');
+  formError.hidden = true;
+  formError.textContent = '';
   for (const name of ADD_FIELDS) {
     const input = fieldEl(name);
     input.removeAttribute('aria-invalid');
@@ -338,9 +354,16 @@ function handleSave(event) {
   }
   let id;
   if (mode === 'add') {
-    const lead = createLead(result.values, state.leads, state.today);
-    id = lead.id;
-    setLeads([...state.leads, lead]);
+    const added = addLead(state.leads, result.values, state.today);
+    if (!added.ok) {
+      // The limit is enforced here too, not only by disabling the button.
+      const formError = $('form-error');
+      formError.textContent = added.error;
+      formError.hidden = false;
+      return;
+    }
+    id = added.lead.id;
+    setLeads(added.leads);
   } else {
     id = dialogState.leadId;
     setLeads(state.leads.map((l) => (l.id === id ? applyEdit(l, result.values) : l)));
@@ -396,7 +419,9 @@ function setupDialog() {
   $('dialog-cancel').addEventListener('click', () => dialog.close());
   dialog.addEventListener('keydown', trapFocus);
   dialog.addEventListener('close', afterClose);
-  $('add-lead-button').addEventListener('click', (event) => openDialog('add', null, event.currentTarget));
+  $('add-lead-button').addEventListener('click', (event) => {
+    if (canAddLead(state.leads)) openDialog('add', null, event.currentTarget);
+  });
   document.querySelector('[data-testid="leads-table"] tbody').addEventListener('click', (event) => {
     const button = event.target.closest('[data-testid="details-button"]');
     if (!button) return;
