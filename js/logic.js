@@ -104,6 +104,60 @@ export function getPriority(lead, today) {
   return { score, level: priorityLevel(score) };
 }
 
+// ---------- Metrics, chart counts and default order (SPEC.md sections 6 and 7) ----------
+
+/** The four summary cards. Always computed on all leads, never on a filtered list. */
+export function computeMetrics(leads) {
+  const won = leads.filter((l) => l.status === 'נסגר בהצלחה');
+  return {
+    total: leads.length,
+    newCount: leads.filter((l) => l.status === 'חדש').length,
+    wonCount: won.length,
+    wonValue: won.reduce((sum, l) => sum + l.value, 0),
+  };
+}
+
+/** Lead count per source, in SPEC order, including sources with 0 leads. */
+export function countBySource(leads) {
+  return SOURCES.map((source) => ({ source, count: leads.filter((l) => l.source === source).length }));
+}
+
+/**
+ * Default table order: open leads by score (high to low), then follow-up date (earliest first,
+ * no date last), then id. Closed leads after all open ones, by id. Returns a new array.
+ */
+export function sortLeads(leads, today) {
+  const byId = (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const open = leads.filter(isOpen);
+  const closed = leads.filter((l) => !isOpen(l));
+  open.sort((a, b) => {
+    const scoreDiff = priorityScore(b, today) - priorityScore(a, today);
+    if (scoreDiff !== 0) return scoreDiff;
+    if (a.followUpDate !== b.followUpDate) {
+      if (a.followUpDate === null) return 1;
+      if (b.followUpDate === null) return -1;
+      return a.followUpDate < b.followUpDate ? -1 : 1;
+    }
+    return byId(a, b);
+  });
+  closed.sort(byId);
+  return [...open, ...closed];
+}
+
+// ---------- Display formatting ----------
+
+/** 60000 -> '60,000 ₪'. Fixed format, independent of the browser locale. */
+export function formatCurrency(value) {
+  return `${String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} ₪`;
+}
+
+/** '2026-11-07' -> '07/11/2026'; null -> 'לא נקבע'. */
+export function formatDate(dateStr) {
+  if (dateStr == null) return 'לא נקבע';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 // ---------- Validation (shared by demo data, future forms and localStorage loading) ----------
 
 const ID_RE = /^L-\d{3}$/;

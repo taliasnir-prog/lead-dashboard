@@ -1,0 +1,236 @@
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --text: #1c2430;
+  --muted: #5b6575;
+  --border: #e1e4ea;
+  --accent: #2557d6;
+  --accent-soft: #e8eefc;
+  --banner-bg: #fff6db;
+  --banner-border: #f0d78a;
+  --overdue-bg: #fdecec;
+  --overdue-text: #b42318;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+
+  --st-new-bg: #e8eefc;      --st-new-text: #1f47b0;
+  --st-contact-bg: #f1e9fd;  --st-contact-text: #6431b5;
+  --st-follow-bg: #fff1dc;   --st-follow-text: #8a4b00;
+  --st-won-bg: #e3f6ea;      --st-won-text: #17663a;
+  --st-lost-bg: #eef0f3;     --st-lost-text: #4a5464;
+
+  --pr-high-bg: #fde3e1;     --pr-high-text: #a3201a;
+  --pr-med-bg: #fff1dc;      --pr-med-text: #8a4b00;
+  --pr-low-bg: #eef0f3;      --pr-low-text: #4a5464;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "Rubik", "Assistant", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Header */
+.page-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0 16px;
+}
+.page-header h1 { margin: 0; font-size: 1.6rem; line-height: 1.25; }
+.subtitle { margin: 4px 0 0; color: var(--muted); }
+
+/* Demo banner */
+.demo-banner {
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  background: var(--banner-bg);
+  border: 1px solid var(--banner-border);
+  border-radius: var(--radius);
+}
+
+/* Sections */
+.section { margin-top: 24px; }
+.section h2 { margin: 0 0 12px; font-size: 1.2rem; }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+.hint { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
+main { padding-bottom: 40px; }
+
+/* Cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 1024px) {
+  .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.card-label { color: var(--muted); font-size: 0.95rem; }
+.card-value { font-size: 1.75rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .card { padding: 12px; }
+  .card-label { font-size: 0.85rem; }
+  .card-value { font-size: 1.4rem; }
+}
+
+/* Chart: horizontal bars */
+.chart { display: grid; gap: 10px; }
+.bar-row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 2.5rem;
+  align-items: center;
+  gap: 10px;
+}
+.bar-label { font-weight: 600; overflow-wrap: anywhere; }
+.bar-track {
+  height: 22px;
+  background: var(--accent-soft);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bar-fill { height: 100%; background: var(--accent); border-radius: 6px; }
+.bar-count { font-weight: 700; text-align: start; }
+
+/* Table */
+.table-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.table-head h2 { margin-bottom: 0; }
+.link-button {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 8px 16px;
+  min-height: 44px;
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.link-button:hover { background: var(--accent-soft); }
+.help {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+}
+.help p { margin: 0; }
+
+.table-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+table.leads {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.leads th, .leads td {
+  padding: 10px 12px;
+  text-align: start;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.leads thead th {
+  background: #f0f2f6;
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+.leads tbody tr:last-child td { border-bottom: none; }
+.leads td { background: var(--surface); }
+.leads tr.is-overdue td { background: var(--overdue-bg); }
+
+/* Keep the lead name visible while the table scrolls sideways (small screens). */
+.leads th[data-col="name"], .leads td[data-col="name"] {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  box-shadow: inset -1px 0 0 var(--border);
+}
+.leads thead th[data-col="name"] { z-index: 2; }
+.leads td.num { font-variant-numeric: tabular-nums; }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.st-new     { background: var(--st-new-bg);     color: var(--st-new-text); }
+.st-contact { background: var(--st-contact-bg); color: var(--st-contact-text); }
+.st-follow  { background: var(--st-follow-bg);  color: var(--st-follow-text); }
+.st-won     { background: var(--st-won-bg);     color: var(--st-won-text); }
+.st-lost    { background: var(--st-lost-bg);    color: var(--st-lost-text); }
+
+.pr-high { background: var(--pr-high-bg); color: var(--pr-high-text); }
+.pr-med  { background: var(--pr-med-bg);  color: var(--pr-med-text); }
+.pr-low  { background: var(--pr-low-bg);  color: var(--pr-low-text); }
+.pr-none { color: var(--muted); font-weight: 400; }
+.score { color: var(--muted); font-size: 0.85rem; margin-inline-start: 4px; }
+
+.overdue-tag {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--overdue-text);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.no-date { color: var(--muted); }
