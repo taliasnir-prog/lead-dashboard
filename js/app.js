@@ -440,6 +440,8 @@ function confirmReset() {
   resetFilterInputs();
   clearFlash();
   state.invalid = false;
+  // "Today" is recalculated here: the page may have stayed open past midnight (SPEC 1.3, AC-10.9).
+  state.today = toLocalDateString(new Date());
   setLeads(createDemoLeads(state.today));
   persist();
   resetDialog.close();
