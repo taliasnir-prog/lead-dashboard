@@ -23,7 +23,7 @@ async function seed(page, n) {
 test.beforeEach(async ({ page }) => {
   test.setTimeout(90_000); // 500 rows are slower to render in Firefox and WebKit
   await page.clock.setFixedTime(new Date('2026-11-07T10:00:00+02:00'));
-  await page.goto('/');
+  await page.goto('./');
   await expect(rows(page)).toHaveCount(30);
 });
 

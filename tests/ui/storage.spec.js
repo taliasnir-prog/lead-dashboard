@@ -20,7 +20,7 @@ async function open(page, { init, now = DAY1 } = {}) {
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   if (init) await page.addInitScript(init);
   await page.clock.setFixedTime(now);
-  await page.goto('/');
+  await page.goto('./');
   await expect(rows(page)).not.toHaveCount(0);
   return errors;
 }

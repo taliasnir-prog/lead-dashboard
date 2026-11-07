@@ -44,7 +44,7 @@
 אם אין תשתית בדיקות, מקימים אותה לפני פיתוח היכולות (ענף `test/setup`):
 
 - **בדיקות לוגיקה:** מריצים את `node --test` של Node.js על `tests/logic/*.test.js`. הבדיקות קוראות לפונקציות ב-`js/logic.js` עם `today` קבוע.
-- **בדיקות ממשק:** משתמשים ב-Playwright על `tests/ui/*.spec.js`, בשלושה מנועים (Chromium, Firefox, WebKit) ובשני גדלים (מחשב 1280x800 וסלולרי 375x667). בסך הכל יש 6 פרויקטים. Playwright מרים שרת סטטי מקומי (`serve` כ-devDependency) לפני הבדיקות.
+- **בדיקות ממשק:** משתמשים ב-Playwright על `tests/ui/*.spec.js`, בשלושה מנועים (Chromium, Firefox, WebKit) ובשני גדלים (מחשב 1280x800 וסלולרי 375x667). בסך הכל יש 6 פרויקטים. לפני הבדיקות Playwright מרים שרת סטטי מקומי (`tests/support/static-server.mjs`), שמגיש את האתר רק תחת `/lead-dashboard/`, כמו GitHub Pages. בבדיקות מנווטים עם `page.goto('./')` ולא עם `page.goto('/')`.
 - **מגבלות:**
   - WebKit של Playwright הוא המנוע של Safari, אבל הוא לא Safari אמיתי ולא iPhone.
   - ב-Firefox אין מצב סלולרי, ולכן "סלולרי" שם הוא Firefox רגיל בחלון צר.
@@ -208,7 +208,7 @@ Thumbs.db
 ### פרסום ב-GitHub Pages
 1. לפני פרסום: `main` מעודכן וכל הבדיקות (`npm run test:all`) עברו על `main`.
 2. הגדרה: Settings > Pages > Deploy from a branch > `main` / `(root)`.
-3. אחרי הפרסום בודקים דרך הכתובת הציבורית (`https://<user>.github.io/<repo>/`):
+3. אחרי הפרסום בודקים דרך הכתובת הציבורית (`https://<user>.github.io/<repo>/`). את הבדיקות האוטומטיות מריצים עם `BASE_URL=<הכתובת> npx playwright test --workers=1`, ובמצב הזה לא מופעל שרת מקומי:
    - הדף נטען, וקובצי ה-CSS וה-JS נטענים בלי 404 בלשונית Network ובלי שגיאות בקונסול.
    - הודעת נתוני הדמה, הכרטיסים, התרשים והטבלה מוצגים.
    - פעולות עיקריות: סינון, הוספת ליד, עריכה, רענון ששומר את השינוי, איפוס.

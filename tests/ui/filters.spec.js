@@ -7,7 +7,7 @@ const STATUSES = ['חדש', 'נוצר קשר', 'במעקב', 'נסגר בהצל�
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED_NOW);
-  await page.goto('/');
+  await page.goto('./');
   await expect(rows(page)).toHaveCount(30);
 });
 

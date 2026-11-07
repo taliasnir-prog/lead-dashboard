@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.endsWith('mobile'), 'small screen only');
   await page.clock.setFixedTime(new Date('2026-11-07T10:00:00+02:00'));
-  await page.goto('/');
+  await page.goto('./');
   await expect(page.locator('[data-testid="leads-table"] tbody tr')).toHaveCount(30);
 });
 

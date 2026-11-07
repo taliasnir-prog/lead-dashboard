@@ -6,7 +6,7 @@ const FIXED_NOW = new Date('2026-11-07T10:00:00+02:00');
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED_NOW);
-  await page.goto('/');
+  await page.goto('./');
   await expect(page.locator('[data-testid="leads-table"] tbody tr')).toHaveCount(30);
 });
 
