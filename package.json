@@ -1,0 +1,20 @@
+{
+  "name": "lead-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smart lead management dashboard - static demo with fictional data",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/logic/**/*.test.js\"",
+    "test:ui": "playwright test",
+    "test:all": "npm test && npm run test:ui",
+    "test:ui:chromium": "playwright test --project=chromium-desktop --project=chromium-mobile"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "serve": "^14.2.7"
+  },
+  "overrides": {
+    "compression": "^1.8.2"
+  }
+}

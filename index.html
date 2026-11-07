@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>דאשבורד לידים</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="container">
+      <h1>דאשבורד לניהול לידים</h1>
+      <p class="subtitle">תמונת מצב, מעקב אחרי הטיפול ותעדוף לפי כללים קבועים</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="demo-banner" role="note" data-testid="demo-banner">
+      <strong>נתוני דמה</strong> - כל השמות והפרטים בדאשבורד פיקטיביים
+    </p>
+
+    <div class="storage-bar" data-testid="storage-bar">
+      <p class="storage-note" data-testid="storage-note">
+        השינויים נשמרים רק בדפדפן הזה ואינם מסתנכרנים בין מכשירים או משתמשים.
+      </p>
+      <button type="button" class="secondary-button" data-testid="reset-button">איפוס לנתוני הדמה</button>
+    </div>
+    <p class="notice notice-warning" role="alert" hidden data-testid="storage-invalid">
+      הנתונים השמורים לא היו תקינים, ולכן נטענו נתוני הדמה.
+    </p>
+    <p class="notice notice-error" role="alert" hidden data-testid="storage-unavailable">
+      לא ניתן לשמור בדפדפן הזה. השינויים לא יישמרו לאחר רענון.
+    </p>
+    <p class="notice notice-error" role="alert" hidden data-testid="storage-rejected">
+      השינוי האחרון לא נשמר כי הנתונים לא עברו בדיקת תקינות. הנתונים התקינים האחרונים נשארו שמורים בדפדפן.
+    </p>
+
+    <section aria-labelledby="metrics-title" class="section">
+      <h2 id="metrics-title">תמונת מצב</h2>
+      <div class="cards" data-testid="cards">
+        <div class="card" data-metric="total">
+          <span class="card-label">סך הלידים</span>
+          <span class="card-value" data-testid="metric-total"></span>
+        </div>
+        <div class="card" data-metric="new">
+          <span class="card-label">לידים חדשים</span>
+          <span class="card-value" data-testid="metric-new"></span>
+        </div>
+        <div class="card" data-metric="won">
+          <span class="card-label">עסקאות שנסגרו בהצלחה</span>
+          <span class="card-value" data-testid="metric-won"></span>
+        </div>
+        <div class="card" data-metric="won-value">
+          <span class="card-label">שווי עסקאות שנסגרו</span>
+          <span class="card-value" data-testid="metric-won-value"></span>
+        </div>
+      </div>
+      <p class="hint">המדדים מחושבים על כלל הלידים ואינם מושפעים מהסינון.</p>
+    </section>
+
+    <section aria-labelledby="chart-title" class="section panel">
+      <h2 id="chart-title">לידים לפי מקור הגעה</h2>
+      <div class="chart" role="img" data-testid="source-chart"></div>
+    </section>
+
+    <section aria-labelledby="table-title" class="section panel">
+      <div class="table-head">
+        <h2 id="table-title">לידים</h2>
+        <div class="table-actions">
+          <button type="button" class="link-button" aria-expanded="false" aria-controls="priority-help"
+                  data-testid="priority-help-button">איך נקבע הדירוג?</button>
+          <button type="button" class="primary-button" data-testid="add-lead-button"
+                  aria-describedby="add-limit">ליד חדש</button>
+        </div>
+      </div>
+      <p class="notice notice-warning" id="add-limit" hidden data-testid="add-limit"></p>
+      <div id="priority-help" class="help" hidden data-testid="priority-help">
+        <p>
+          הדירוג מחושב מרמת העניין (1 עד 3 נקודות), ממועד המעקב (באיחור 3, היום 2, בלי תאריך או בתוך 3 ימים 1)
+          ומנקודה נוספת לליד חדש. 5 ומעלה גבוהה, 3 עד 4 בינונית, עד 2 נמוכה. לידים סגורים לא בתעדוף.
+        </p>
+      </div>
+      <form class="filters" role="search" aria-label="חיפוש וסינון לידים" data-testid="filters" novalidate>
+        <div class="field field-query">
+          <label for="filter-query">חיפוש לפי שם</label>
+          <input type="search" id="filter-query" name="query" autocomplete="off"
+                 placeholder="הקלידו חלק מהשם" data-testid="filter-query">
+        </div>
+        <div class="field">
+          <label for="filter-status">סטטוס</label>
+          <select id="filter-status" name="status" data-testid="filter-status"></select>
+        </div>
+        <div class="field">
+          <label for="filter-source">מקור</label>
+          <select id="filter-source" name="source" data-testid="filter-source"></select>
+        </div>
+        <div class="field">
+          <label for="filter-rep">נציג</label>
+          <select id="filter-rep" name="rep" data-testid="filter-rep"></select>
+        </div>
+        <div class="field field-actions">
+          <button type="button" class="secondary-button" data-testid="filters-reset">איפוס מסננים</button>
+        </div>
+      </form>
+      <p class="results-count" aria-live="polite" data-testid="results-count"></p>
+      <p class="flash" role="status" tabindex="-1" hidden data-testid="flash"></p>
+      <p class="hint">ממוין לפי עדיפות: הלידים הדחופים למעלה, הסגורים בסוף.</p>
+      <div class="empty-state" hidden data-testid="empty-state">
+        <p>לא נמצאו לידים שמתאימים לחיפוש</p>
+        <button type="button" class="secondary-button" data-testid="empty-reset">איפוס מסננים</button>
+      </div>
+      <div class="table-wrap" data-testid="table-wrap" tabindex="0" aria-label="טבלת לידים, אפשר לגלול לרוחב">
+        <table class="leads" data-testid="leads-table">
+          <caption class="sr-only">כל הלידים, ממוינים לפי עדיפות</caption>
+          <thead>
+            <tr>
+              <th scope="col">מזהה</th>
+              <th scope="col" data-col="name">שם</th>
+              <th scope="col">מקור</th>
+              <th scope="col">נציג</th>
+              <th scope="col">סטטוס</th>
+              <th scope="col">רמת עניין</th>
+              <th scope="col">שווי צפוי</th>
+              <th scope="col">מעקב הבא</th>
+              <th scope="col">עדיפות</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="lead-dialog" aria-labelledby="dialog-title" data-testid="lead-dialog">
+    <form class="dialog-form" novalidate data-testid="lead-form">
+      <header class="dialog-header">
+        <h2 id="dialog-title" data-testid="dialog-title"></h2>
+        <p class="dialog-note" data-mode="add">שדות עם * הם שדות חובה.</p>
+      </header>
+
+      <div class="dialog-body">
+        <p class="field-error form-error" role="alert" hidden data-testid="form-error"></p>
+        <!-- Edit mode: details that cannot be edited -->
+        <dl class="readonly" data-mode="edit" data-testid="readonly-details">
+          <div><dt>מזהה</dt><dd data-ro="id"></dd></div>
+          <div><dt>שם</dt><dd data-ro="name"></dd></div>
+          <div><dt>טלפון</dt><dd data-ro="phone"></dd></div>
+          <div><dt>דוא״ל</dt><dd data-ro="email"></dd></div>
+          <div><dt>מקור</dt><dd data-ro="source"></dd></div>
+          <div><dt>שווי צפוי</dt><dd data-ro="value"></dd></div>
+          <div><dt>נוצר בתאריך</dt><dd data-ro="createdAt"></dd></div>
+          <div><dt>עדיפות נוכחית</dt><dd data-ro="priority"></dd></div>
+        </dl>
+
+        <div class="form-grid">
+          <div class="field" data-mode="add">
+            <label for="f-name">שם *</label>
+            <input id="f-name" name="name" type="text" autocomplete="off" aria-required="true"
+                   aria-describedby="e-name" data-testid="field-name">
+            <p class="field-error" id="e-name" data-testid="error-name" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-phone">טלפון</label>
+            <input id="f-phone" name="phone" type="tel" dir="ltr" autocomplete="off" inputmode="tel"
+                   aria-describedby="e-phone" data-testid="field-phone">
+            <p class="field-error" id="e-phone" data-testid="error-phone" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-email">דוא״ל</label>
+            <input id="f-email" name="email" type="text" dir="ltr" autocomplete="off" inputmode="email"
+                   aria-describedby="e-email" data-testid="field-email">
+            <p class="field-error" id="e-email" data-testid="error-email" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-source">מקור *</label>
+            <select id="f-source" name="source" aria-required="true" aria-describedby="e-source" data-testid="field-source"></select>
+            <p class="field-error" id="e-source" data-testid="error-source" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-status">סטטוס *</label>
+            <select id="f-status" name="status" aria-required="true" aria-describedby="e-status" data-testid="field-status"></select>
+            <p class="field-error" id="e-status" data-testid="error-status" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-interest">רמת עניין *</label>
+            <select id="f-interest" name="interest" aria-required="true" aria-describedby="e-interest" data-testid="field-interest"></select>
+            <p class="field-error" id="e-interest" data-testid="error-interest" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-rep">נציג *</label>
+            <select id="f-rep" name="rep" aria-required="true" aria-describedby="e-rep" data-testid="field-rep"></select>
+            <p class="field-error" id="e-rep" data-testid="error-rep" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-value">שווי עסקה צפוי (₪)</label>
+            <input id="f-value" name="value" type="text" dir="ltr" inputmode="numeric" autocomplete="off"
+                   placeholder="0" aria-describedby="e-value" data-testid="field-value">
+            <p class="field-error" id="e-value" data-testid="error-value" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-followUpDate">תאריך מעקב</label>
+            <input id="f-followUpDate" name="followUpDate" type="date" aria-describedby="e-followUpDate" data-testid="field-followUpDate">
+            <p class="field-error" id="e-followUpDate" data-testid="error-followUpDate" hidden></p>
+          </div>
+          <div class="field field-wide">
+            <label for="f-notes">הערות</label>
+            <textarea id="f-notes" name="notes" rows="3" aria-describedby="e-notes notes-hint" data-testid="field-notes"></textarea>
+            <p class="field-hint" id="notes-hint">עד 500 תווים</p>
+            <p class="field-error" id="e-notes" data-testid="error-notes" hidden></p>
+          </div>
+        </div>
+      </div>
+
+      <footer class="dialog-footer">
+        <button type="submit" class="primary-button" data-testid="dialog-save">שמירה</button>
+        <button type="button" class="secondary-button" data-testid="dialog-cancel">ביטול</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog" aria-labelledby="reset-title" aria-describedby="reset-desc" data-testid="reset-dialog">
+    <h2 id="reset-title">איפוס לנתוני הדמה</h2>
+    <p id="reset-desc">
+      כל השינויים והלידים שנוספו יימחקו, ו-30 לידי הדמה יחזרו עם תאריכים לפי היום.
+      גם החיפוש והמסננים יתאפסו. אי אפשר לבטל את הפעולה.
+    </p>
+    <div class="dialog-footer">
+      <button type="button" class="danger-button" data-testid="reset-confirm">איפוס</button>
+      <button type="button" class="secondary-button" data-testid="reset-cancel">ביטול</button>
+    </div>
+  </dialog>
+</body>
+</html>
