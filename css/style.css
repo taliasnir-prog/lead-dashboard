@@ -320,7 +320,8 @@ table.leads {
 .details-button:hover { background: var(--accent-soft); }
 @media (max-width: 600px) {
   .name-cell { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .details-button { min-height: 28px; }
+  /* Touch target: at least 44x44 on small screens (SPEC section 4). */
+  .details-button { min-height: 44px; min-width: 44px; padding: 4px 14px; }
 }
 
 /* Success message after save */
