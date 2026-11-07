@@ -51,8 +51,11 @@
     <section aria-labelledby="table-title" class="section panel">
       <div class="table-head">
         <h2 id="table-title">לידים</h2>
-        <button type="button" class="link-button" aria-expanded="false" aria-controls="priority-help"
-                data-testid="priority-help-button">איך נקבע הדירוג?</button>
+        <div class="table-actions">
+          <button type="button" class="link-button" aria-expanded="false" aria-controls="priority-help"
+                  data-testid="priority-help-button">איך נקבע הדירוג?</button>
+          <button type="button" class="primary-button" data-testid="add-lead-button">ליד חדש</button>
+        </div>
       </div>
       <div id="priority-help" class="help" hidden data-testid="priority-help">
         <p>
@@ -83,6 +86,7 @@
         </div>
       </form>
       <p class="results-count" aria-live="polite" data-testid="results-count"></p>
+      <p class="flash" role="status" tabindex="-1" hidden data-testid="flash"></p>
       <p class="hint">ממוין לפי עדיפות: הלידים הדחופים למעלה, הסגורים בסוף.</p>
       <div class="empty-state" hidden data-testid="empty-state">
         <p>לא נמצאו לידים שמתאימים לחיפוש</p>
@@ -109,5 +113,91 @@
       </div>
     </section>
   </main>
+
+  <dialog class="lead-dialog" aria-labelledby="dialog-title" data-testid="lead-dialog">
+    <form class="dialog-form" novalidate data-testid="lead-form">
+      <header class="dialog-header">
+        <h2 id="dialog-title" data-testid="dialog-title"></h2>
+        <p class="dialog-note" data-mode="add">שדות עם * הם שדות חובה.</p>
+      </header>
+
+      <div class="dialog-body">
+        <!-- Edit mode: details that cannot be edited -->
+        <dl class="readonly" data-mode="edit" data-testid="readonly-details">
+          <div><dt>מזהה</dt><dd data-ro="id"></dd></div>
+          <div><dt>שם</dt><dd data-ro="name"></dd></div>
+          <div><dt>טלפון</dt><dd data-ro="phone"></dd></div>
+          <div><dt>דוא״ל</dt><dd data-ro="email"></dd></div>
+          <div><dt>מקור</dt><dd data-ro="source"></dd></div>
+          <div><dt>שווי צפוי</dt><dd data-ro="value"></dd></div>
+          <div><dt>נוצר בתאריך</dt><dd data-ro="createdAt"></dd></div>
+          <div><dt>עדיפות נוכחית</dt><dd data-ro="priority"></dd></div>
+        </dl>
+
+        <div class="form-grid">
+          <div class="field" data-mode="add">
+            <label for="f-name">שם *</label>
+            <input id="f-name" name="name" type="text" autocomplete="off" aria-required="true"
+                   aria-describedby="e-name" data-testid="field-name">
+            <p class="field-error" id="e-name" data-testid="error-name" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-phone">טלפון</label>
+            <input id="f-phone" name="phone" type="tel" dir="ltr" autocomplete="off" inputmode="tel"
+                   aria-describedby="e-phone" data-testid="field-phone">
+            <p class="field-error" id="e-phone" data-testid="error-phone" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-email">דוא״ל</label>
+            <input id="f-email" name="email" type="text" dir="ltr" autocomplete="off" inputmode="email"
+                   aria-describedby="e-email" data-testid="field-email">
+            <p class="field-error" id="e-email" data-testid="error-email" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-source">מקור *</label>
+            <select id="f-source" name="source" aria-required="true" aria-describedby="e-source" data-testid="field-source"></select>
+            <p class="field-error" id="e-source" data-testid="error-source" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-status">סטטוס *</label>
+            <select id="f-status" name="status" aria-required="true" aria-describedby="e-status" data-testid="field-status"></select>
+            <p class="field-error" id="e-status" data-testid="error-status" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-interest">רמת עניין *</label>
+            <select id="f-interest" name="interest" aria-required="true" aria-describedby="e-interest" data-testid="field-interest"></select>
+            <p class="field-error" id="e-interest" data-testid="error-interest" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-rep">נציג *</label>
+            <select id="f-rep" name="rep" aria-required="true" aria-describedby="e-rep" data-testid="field-rep"></select>
+            <p class="field-error" id="e-rep" data-testid="error-rep" hidden></p>
+          </div>
+          <div class="field" data-mode="add">
+            <label for="f-value">שווי עסקה צפוי (₪)</label>
+            <input id="f-value" name="value" type="text" dir="ltr" inputmode="numeric" autocomplete="off"
+                   placeholder="0" aria-describedby="e-value" data-testid="field-value">
+            <p class="field-error" id="e-value" data-testid="error-value" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-followUpDate">תאריך מעקב</label>
+            <input id="f-followUpDate" name="followUpDate" type="date" aria-describedby="e-followUpDate" data-testid="field-followUpDate">
+            <p class="field-error" id="e-followUpDate" data-testid="error-followUpDate" hidden></p>
+          </div>
+          <div class="field field-wide">
+            <label for="f-notes">הערות</label>
+            <textarea id="f-notes" name="notes" rows="3" aria-describedby="e-notes notes-hint" data-testid="field-notes"></textarea>
+            <p class="field-hint" id="notes-hint">עד 500 תווים</p>
+            <p class="field-error" id="e-notes" data-testid="error-notes" hidden></p>
+          </div>
+        </div>
+      </div>
+
+      <footer class="dialog-footer">
+        <button type="submit" class="primary-button" data-testid="dialog-save">שמירה</button>
+        <button type="button" class="secondary-button" data-testid="dialog-cancel">ביטול</button>
+      </footer>
+    </form>
+  </dialog>
 </body>
 </html>

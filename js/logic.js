@@ -164,6 +164,79 @@ export function filterLeads(leads, filters = EMPTY_FILTERS) {
     && (rep === '' || lead.rep === rep));
 }
 
+// ---------- Add and edit forms (SPEC.md section 6, "תקינות בטופס") ----------
+
+/** Fields in the add form, in screen order (used to find the first invalid field). */
+export const ADD_FIELDS = ['name', 'phone', 'email', 'source', 'status', 'interest', 'rep', 'value', 'followUpDate', 'notes'];
+/** The only fields that can be edited on an existing lead. */
+export const EDIT_FIELDS = ['status', 'interest', 'rep', 'followUpDate', 'notes'];
+
+const DIGITS_RE = /^\d+$/;
+
+/** Next id after the highest existing one (all leads, never the filtered list). */
+export function nextLeadId(leads) {
+  const max = leads.reduce((m, l) => Math.max(m, Number(String(l.id).slice(2)) || 0), 0);
+  return `L-${String(max + 1).padStart(3, '0')}`;
+}
+
+/** Form text -> stored value. Trims every text field; '' date -> null; '' value -> 0. */
+function normalizeFormValue(field, raw) {
+  const text = typeof raw === 'string' ? raw.trim() : raw;
+  if (field === 'followUpDate') return text === '' || text == null ? null : text;
+  if (field === 'value') {
+    if (text === '' || text == null) return 0;
+    return typeof text === 'string' && DIGITS_RE.test(text) ? Number(text) : text;
+  }
+  return text ?? '';
+}
+
+/**
+ * Validates form input for 'add' or 'edit'. Only the fields of that mode are read.
+ * Returns { valid, errors, values, firstInvalid }: errors maps field -> Hebrew message,
+ * values holds the normalized values, firstInvalid is the first field in screen order with an error.
+ */
+export function validateLeadForm(input, mode) {
+  const fields = mode === 'add' ? ADD_FIELDS : EDIT_FIELDS;
+  const values = {};
+  const errors = {};
+  for (const field of fields) {
+    const value = normalizeFormValue(field, input[field]);
+    values[field] = value;
+    let message = validateField(field, value);
+    if (message && field === 'value' && typeof value === 'string') {
+      message = 'שווי צריך להיות מספר שלם בין 0 ל-10,000,000, בלי נקודה או פסיק';
+    }
+    if (message) errors[field] = message;
+  }
+  const firstInvalid = fields.find((f) => errors[f]) ?? null;
+  return { valid: firstInvalid === null, errors, values, firstInvalid };
+}
+
+/** New stored lead from validated add-form values. */
+export function createLead(values, leads, today) {
+  return {
+    id: nextLeadId(leads),
+    name: values.name,
+    phone: values.phone,
+    email: values.email,
+    source: values.source,
+    rep: values.rep,
+    status: values.status,
+    interest: values.interest,
+    value: values.value,
+    followUpDate: values.followUpDate,
+    notes: values.notes,
+    createdAt: today,
+  };
+}
+
+/** New lead object with only the editable fields replaced; the original is not changed. */
+export function applyEdit(lead, values) {
+  const next = { ...lead };
+  for (const field of EDIT_FIELDS) if (field in values) next[field] = values[field];
+  return next;
+}
+
 // ---------- Display formatting ----------
 
 /** 60000 -> '60,000 ₪'. Fixed format, independent of the browser locale. */

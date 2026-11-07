@@ -1,9 +1,11 @@
-// Read-only dashboard view. Renders demo data held in memory (no saving yet).
+// Dashboard UI: view, filters, lead details, add and edit.
+// Data lives in memory only at this stage (no localStorage yet).
 // All text is set with textContent, never innerHTML, so lead data cannot inject markup.
 
 import {
   toLocalDateString, computeMetrics, countBySource, sortLeads, filterLeads, getPriority, isOverdue,
-  formatCurrency, formatDate, PRIORITY, STATUSES, SOURCES, REPS, EMPTY_FILTERS,
+  formatCurrency, formatDate, validateLeadForm, createLead, applyEdit,
+  PRIORITY, STATUSES, SOURCES, REPS, INTEREST_LEVELS, EMPTY_FILTERS, ADD_FIELDS, EDIT_FIELDS,
 } from './logic.js';
 import { createDemoLeads } from './demo-data.js';
 
@@ -22,6 +24,8 @@ const PRIORITY_CLASS = {
   [PRIORITY.NONE]: 'pr-none',
 };
 
+const $ = (testid) => document.querySelector(`[data-testid="${testid}"]`);
+
 function el(tag, { className, text, attrs } = {}, children = []) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -32,18 +36,33 @@ function el(tag, { className, text, attrs } = {}, children = []) {
 }
 
 /** Numbers, ids and dates are isolated so they keep their own direction inside RTL text. */
-const bdi = (text) => el('bdi', { text });
+const bdi = (text, attrs) => el('bdi', { text, attrs });
+
+// ---------- State ----------
+
+const state = { today: '', leads: [], sorted: [] };
+
+/** Replace the whole list (never mutate it) and redraw everything that depends on it. */
+function setLeads(leads) {
+  state.leads = leads;
+  state.sorted = sortLeads(leads, state.today);
+  renderMetrics(state.leads);
+  renderChart(state.leads);
+  renderResults();
+}
+
+// ---------- Cards and chart (always all leads) ----------
 
 function renderMetrics(leads) {
   const m = computeMetrics(leads);
-  document.querySelector('[data-testid="metric-total"]').replaceChildren(bdi(String(m.total)));
-  document.querySelector('[data-testid="metric-new"]').replaceChildren(bdi(String(m.newCount)));
-  document.querySelector('[data-testid="metric-won"]').replaceChildren(bdi(String(m.wonCount)));
-  document.querySelector('[data-testid="metric-won-value"]').replaceChildren(bdi(formatCurrency(m.wonValue)));
+  $('metric-total').replaceChildren(bdi(String(m.total)));
+  $('metric-new').replaceChildren(bdi(String(m.newCount)));
+  $('metric-won').replaceChildren(bdi(String(m.wonCount)));
+  $('metric-won-value').replaceChildren(bdi(formatCurrency(m.wonValue)));
 }
 
 function renderChart(leads) {
-  const chart = document.querySelector('[data-testid="source-chart"]');
+  const chart = $('source-chart');
   const counts = countBySource(leads);
   const max = Math.max(1, ...counts.map((c) => c.count));
   chart.setAttribute(
@@ -59,6 +78,21 @@ function renderChart(leads) {
       el('span', { className: 'bar-count', text: String(count), attrs: { 'data-testid': 'bar-count' } }),
     ]);
   }));
+}
+
+// ---------- Table ----------
+
+function nameCell(lead) {
+  const button = el('button', {
+    className: 'details-button',
+    text: 'פרטים',
+    attrs: {
+      type: 'button', 'data-testid': 'details-button', 'data-id': lead.id, 'aria-label': `פרטים של ${lead.name}`,
+    },
+  });
+  return el('td', { attrs: { 'data-col': 'name' } }, [
+    el('div', { className: 'name-cell' }, [el('span', { className: 'name-text', text: lead.name }), button]),
+  ]);
 }
 
 function followUpCell(lead, today) {
@@ -85,7 +119,7 @@ function renderTable(visibleLeads, today) {
   tbody.replaceChildren(...visibleLeads.map((lead) => {
     const row = el('tr', { attrs: { 'data-id': lead.id } }, [
       el('td', { attrs: { 'data-col': 'id' } }, [bdi(lead.id)]),
-      el('td', { text: lead.name, attrs: { 'data-col': 'name' } }),
+      nameCell(lead),
       el('td', { attrs: { 'data-col': 'source' } }, [bdi(lead.source)]),
       el('td', { text: lead.rep, attrs: { 'data-col': 'rep' } }),
       el('td', { attrs: { 'data-col': 'status' } }, [el('span', { className: `badge ${STATUS_CLASS[lead.status]}`, text: lead.status })]),
@@ -100,7 +134,7 @@ function renderTable(visibleLeads, today) {
 }
 
 function setupPriorityHelp() {
-  const button = document.querySelector('[data-testid="priority-help-button"]');
+  const button = $('priority-help-button');
   const panel = document.getElementById(button.getAttribute('aria-controls'));
   button.addEventListener('click', () => {
     const open = button.getAttribute('aria-expanded') === 'true';
@@ -112,18 +146,17 @@ function setupPriorityHelp() {
 // ---------- Filters ----------
 
 const filterEls = {
-  form: document.querySelector('[data-testid="filters"]'),
-  query: document.querySelector('[data-testid="filter-query"]'),
-  status: document.querySelector('[data-testid="filter-status"]'),
-  source: document.querySelector('[data-testid="filter-source"]'),
-  rep: document.querySelector('[data-testid="filter-rep"]'),
+  form: $('filters'),
+  query: $('filter-query'),
+  status: $('filter-status'),
+  source: $('filter-source'),
+  rep: $('filter-rep'),
 };
 
-function fillSelect(select, values) {
-  select.replaceChildren(
-    el('option', { text: 'הכל', attrs: { value: '' } }),
-    ...values.map((v) => el('option', { text: v, attrs: { value: v } })),
-  );
+function fillSelect(select, values, firstOption) {
+  const options = values.map((v) => el('option', { text: v, attrs: { value: v } }));
+  if (firstOption) options.unshift(el('option', { text: firstOption, attrs: { value: '' } }));
+  select.replaceChildren(...options);
 }
 
 function readFilters() {
@@ -143,21 +176,20 @@ function resetFilterInputs() {
 }
 
 /** Table, counter and empty state follow the filters. Cards and chart always use all leads. */
-function renderResults(state) {
+function renderResults() {
   const visible = filterLeads(state.sorted, readFilters());
   renderTable(visible, state.today);
-  document.querySelector('[data-testid="results-count"]').textContent =
-    `מוצגים ${visible.length} מתוך ${state.leads.length} לידים`;
+  $('results-count').textContent = `מוצגים ${visible.length} מתוך ${state.leads.length} לידים`;
   const empty = visible.length === 0;
-  document.querySelector('[data-testid="empty-state"]').hidden = !empty;
-  document.querySelector('[data-testid="table-wrap"]').hidden = empty;
+  $('empty-state').hidden = !empty;
+  $('table-wrap').hidden = empty;
 }
 
-function setupFilters(state) {
-  fillSelect(filterEls.status, STATUSES);
-  fillSelect(filterEls.source, SOURCES);
-  fillSelect(filterEls.rep, REPS);
-  const update = () => renderResults(state);
+function setupFilters() {
+  fillSelect(filterEls.status, STATUSES, 'הכל');
+  fillSelect(filterEls.source, SOURCES, 'הכל');
+  fillSelect(filterEls.rep, REPS, 'הכל');
+  const update = () => { clearFlash(); renderResults(); };
   filterEls.form.addEventListener('submit', (event) => event.preventDefault());
   filterEls.query.addEventListener('input', update);
   for (const select of [filterEls.status, filterEls.source, filterEls.rep]) {
@@ -168,19 +200,202 @@ function setupFilters(state) {
     update();
     filterEls.query.focus();
   };
-  document.querySelector('[data-testid="filters-reset"]').addEventListener('click', reset);
-  document.querySelector('[data-testid="empty-reset"]').addEventListener('click', reset);
+  $('filters-reset').addEventListener('click', reset);
+  $('empty-reset').addEventListener('click', reset);
 }
 
+// ---------- Success message ----------
+
+function showFlash(text) {
+  const flash = $('flash');
+  flash.textContent = text;
+  flash.hidden = false;
+}
+
+function clearFlash() {
+  const flash = $('flash');
+  flash.hidden = true;
+  flash.textContent = '';
+}
+
+// ---------- Lead dialog (details, edit, add) ----------
+
+const dialog = $('lead-dialog');
+const form = $('lead-form');
+const fieldEl = (name) => form.elements.namedItem(name);
+const dialogState = { mode: null, leadId: null, opener: null, saved: null };
+
+function setupDialogSelects() {
+  fillSelect(fieldEl('source'), SOURCES, 'בחרו מקור');
+  fillSelect(fieldEl('rep'), REPS, 'בחרו נציג');
+  fillSelect(fieldEl('status'), STATUSES); // exactly the 5 statuses, no "הכל"
+  fillSelect(fieldEl('interest'), INTEREST_LEVELS);
+}
+
+function clearErrors() {
+  for (const name of ADD_FIELDS) {
+    const input = fieldEl(name);
+    input.removeAttribute('aria-invalid');
+    const error = document.getElementById(`e-${name}`);
+    error.textContent = '';
+    error.hidden = true;
+  }
+}
+
+function showErrors(errors) {
+  clearErrors();
+  for (const [name, message] of Object.entries(errors)) {
+    fieldEl(name).setAttribute('aria-invalid', 'true');
+    const error = document.getElementById(`e-${name}`);
+    error.textContent = message;
+    error.hidden = false;
+  }
+}
+
+function setMode(mode) {
+  for (const node of dialog.querySelectorAll('[data-mode]')) node.hidden = node.dataset.mode !== mode;
+}
+
+function setReadonly(key, text, { ltr = false, empty = false } = {}) {
+  const dd = dialog.querySelector(`[data-ro="${key}"]`);
+  dd.classList.toggle('empty', empty);
+  dd.replaceChildren(ltr ? bdi(text, { dir: 'ltr' }) : document.createTextNode(text));
+}
+
+function fillReadonly(lead) {
+  setReadonly('id', lead.id, { ltr: true });
+  setReadonly('name', lead.name);
+  setReadonly('phone', lead.phone || 'לא צוין', { ltr: Boolean(lead.phone), empty: !lead.phone });
+  setReadonly('email', lead.email || 'לא צוין', { ltr: Boolean(lead.email), empty: !lead.email });
+  setReadonly('source', lead.source);
+  setReadonly('value', formatCurrency(lead.value), { ltr: true });
+  setReadonly('createdAt', formatDate(lead.createdAt), { ltr: true });
+  const { score, level } = getPriority(lead, state.today);
+  setReadonly('priority', score === null ? level : `${level} (${score})`);
+}
+
+/** Opens the dialog. The form holds a temporary copy; nothing changes until a valid save. */
+function openDialog(mode, lead, opener) {
+  dialogState.mode = mode;
+  dialogState.leadId = lead?.id ?? null;
+  dialogState.opener = opener;
+  dialogState.saved = null;
+  form.reset();
+  clearErrors();
+  setMode(mode);
+  if (mode === 'edit') {
+    $('dialog-title').textContent = `פרטי ליד ${lead.id}`;
+    fillReadonly(lead);
+    fieldEl('status').value = lead.status;
+    fieldEl('interest').value = lead.interest;
+    fieldEl('rep').value = lead.rep;
+    fieldEl('followUpDate').value = lead.followUpDate ?? '';
+    fieldEl('notes').value = lead.notes;
+  } else {
+    $('dialog-title').textContent = 'ליד חדש';
+    fieldEl('source').value = '';
+    fieldEl('rep').value = '';
+    fieldEl('status').value = 'חדש';
+    fieldEl('interest').value = 'בינונית';
+  }
+  dialog.showModal();
+  fieldEl(mode === 'add' ? 'name' : 'status').focus();
+}
+
+function readForm(mode) {
+  const fields = mode === 'add' ? ADD_FIELDS : EDIT_FIELDS;
+  return Object.fromEntries(fields.map((name) => [name, fieldEl(name).value]));
+}
+
+function handleSave(event) {
+  event.preventDefault();
+  const { mode } = dialogState;
+  const result = validateLeadForm(readForm(mode), mode);
+  if (!result.valid) {
+    showErrors(result.errors);
+    const first = fieldEl(result.firstInvalid);
+    first.focus({ preventScroll: true });
+    // Bring the whole field into view, including its error message under the input.
+    first.closest('.field').scrollIntoView({ block: 'nearest' });
+    return;
+  }
+  let id;
+  if (mode === 'add') {
+    const lead = createLead(result.values, state.leads, state.today);
+    id = lead.id;
+    setLeads([...state.leads, lead]);
+  } else {
+    id = dialogState.leadId;
+    setLeads(state.leads.map((l) => (l.id === id ? applyEdit(l, result.values) : l)));
+  }
+  dialogState.saved = { mode, id };
+  dialog.close();
+}
+
+/** Where focus goes after the dialog closes. */
+function afterClose() {
+  const { saved, opener } = dialogState;
+  if (!saved) {
+    // Cancel or Esc: nothing changed. Back to the button that opened the dialog.
+    const target = opener?.isConnected ? opener
+      : (dialogState.leadId && document.querySelector(`[data-testid="details-button"][data-id="${dialogState.leadId}"]`))
+        || $('add-lead-button');
+    target.focus();
+    return;
+  }
+  const button = document.querySelector(`[data-testid="details-button"][data-id="${saved.id}"]`);
+  if (saved.mode === 'add') {
+    showFlash(button
+      ? `הליד ${saved.id} נוסף.`
+      : `הליד ${saved.id} נוסף, אבל הוא לא מוצג כרגע כי הוא לא מתאים לחיפוש או לסינון הפעילים.`);
+  } else {
+    showFlash(button
+      ? `השינויים בליד ${saved.id} נשמרו.`
+      : `השינויים בליד ${saved.id} נשמרו. הליד לא מוצג כרגע כי הוא כבר לא מתאים לחיפוש או לסינון הפעילים.`);
+  }
+  (button ?? $('flash')).focus();
+}
+
+/** Keeps Tab and Shift+Tab inside the open dialog. */
+function trapFocus(event) {
+  if (event.key !== 'Tab') return;
+  const focusables = [...dialog.querySelectorAll('input, select, textarea, button')]
+    .filter((node) => !node.disabled && node.getClientRects().length > 0);
+  if (focusables.length === 0) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function setupDialog() {
+  setupDialogSelects();
+  form.addEventListener('submit', handleSave);
+  $('dialog-cancel').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('keydown', trapFocus);
+  dialog.addEventListener('close', afterClose);
+  $('add-lead-button').addEventListener('click', (event) => openDialog('add', null, event.currentTarget));
+  document.querySelector('[data-testid="leads-table"] tbody').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-testid="details-button"]');
+    if (!button) return;
+    const lead = state.leads.find((l) => l.id === button.dataset.id);
+    if (lead) openDialog('edit', lead, button);
+  });
+}
+
+// ---------- Start ----------
+
 function init() {
-  const today = toLocalDateString(new Date());
-  const leads = createDemoLeads(today);
-  const state = { today, leads, sorted: sortLeads(leads, today) };
-  renderMetrics(leads);
-  renderChart(leads);
-  setupFilters(state);
-  renderResults(state);
+  state.today = toLocalDateString(new Date());
+  setupFilters();
   setupPriorityHelp();
+  setupDialog();
+  setLeads(createDemoLeads(state.today));
 }
 
 init();
