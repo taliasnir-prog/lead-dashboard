@@ -5,7 +5,7 @@ const cell = (page, id, col) => page.locator(`[data-testid="leads-table"] tbody 
 
 test('AC-10.9 reset after midnight without reload creates dates from the new local day', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-11-07T23:50:00+02:00'));
-  await page.goto('/');
+  await page.goto('./');
   await expect(cell(page, 'L-002', 'followUp')).toHaveText('07/11/2026'); // offset 0 = today
   await expect(cell(page, 'L-001', 'followUp')).toHaveText('05/11/2026באיחור');
 
@@ -34,7 +34,7 @@ test('AC-10.9 reset after midnight without reload creates dates from the new loc
 
 test('AC-10.9 reset on the same day keeps the same dates', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-11-07T10:00:00+02:00'));
-  await page.goto('/');
+  await page.goto('./');
   await page.getByTestId('reset-button').click();
   await page.getByTestId('reset-confirm').click();
   await expect(cell(page, 'L-002', 'followUp')).toHaveText('07/11/2026');

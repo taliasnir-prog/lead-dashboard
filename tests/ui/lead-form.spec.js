@@ -6,7 +6,7 @@ const STATUSES = ['חדש', 'נוצר קשר', 'במעקב', 'נסגר בהצל�
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-11-07T10:00:00+02:00'));
-  await page.goto('/');
+  await page.goto('./');
   await expect(rows(page)).toHaveCount(30);
 });
 
