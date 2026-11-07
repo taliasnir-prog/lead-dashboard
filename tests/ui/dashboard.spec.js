@@ -117,7 +117,7 @@ test('AC-9.2 chart has a text description', async ({ page }) => {
 });
 
 test('AC-G.1 small screen: no horizontal page scroll, table scrolls inside its container', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
   const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(pageWidth).toBeLessThanOrEqual(375);
   for (const id of ['metric-total', 'metric-new', 'metric-won', 'metric-won-value', 'priority-help-button']) {
@@ -132,14 +132,14 @@ test('AC-G.1 small screen: no horizontal page scroll, table scrolls inside its c
 });
 
 test('AC-G.1 small screen: card values are not clipped', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
   const clipped = await page.locator('.card-value, .card-label').evaluateAll((els) =>
     els.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent));
   expect(clipped).toEqual([]);
 });
 
 test('AC-G.2 desktop: the four cards are on one row', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'desktop only');
+  test.skip(!testInfo.project.name.endsWith('desktop'), 'desktop only');
   const tops = await page.locator('.card').evaluateAll((cards) => cards.map((c) => Math.round(c.getBoundingClientRect().top)));
   expect(tops).toHaveLength(4);
   expect(new Set(tops).size).toBe(1);

@@ -18,5 +18,5 @@ test('infra: page loads over the static server, Hebrew RTL, no console errors', 
 test('infra: viewport matches the project size', async ({ page }, testInfo) => {
   await page.goto('/');
   const width = await page.evaluate(() => window.innerWidth);
-  expect(width).toBe(testInfo.project.name === 'mobile' ? 375 : 1280);
+  expect(width).toBe(testInfo.project.name.endsWith('mobile') ? 375 : 1280);
 });

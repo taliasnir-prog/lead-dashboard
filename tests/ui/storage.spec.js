@@ -350,7 +350,7 @@ test('AC-G.4 reset dialog is labelled and described for screen readers', async (
 });
 
 test('AC-G.1 small screen: reset dialog and notices fit, no horizontal page scroll', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
   await open(page, { init: BREAKERS['setItem throws'] });
   await expect(page.getByTestId('storage-unavailable')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);

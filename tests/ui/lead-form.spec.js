@@ -401,7 +401,7 @@ test('AC-G.4 every form field has a visible label; required fields are marked', 
 // ---------- Small screen and desktop layout of the dialog ----------
 
 test('AC-G.1 small screen: dialog fits, scrolls inside, action buttons always reachable', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
   await page.getByTestId('add-lead-button').click();
   const box = await dialog(page).boundingBox();
   expect(box.x).toBeGreaterThanOrEqual(0);
@@ -422,7 +422,7 @@ test('AC-G.1 small screen: dialog fits, scrolls inside, action buttons always re
 });
 
 test('AC-G.1 small screen: edit dialog with errors still shows the action buttons', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
   await openDetails(page, 'L-009');
   await field(page, 'notes').fill('א'.repeat(501));
   await page.getByTestId('dialog-save').click();
@@ -432,7 +432,7 @@ test('AC-G.1 small screen: edit dialog with errors still shows the action button
 });
 
 test('AC-G.2 desktop: dialog is centered and fully visible', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'desktop only');
+  test.skip(!testInfo.project.name.endsWith('desktop'), 'desktop only');
   await page.getByTestId('add-lead-button').click();
   const box = await dialog(page).boundingBox();
   expect(box.y).toBeGreaterThanOrEqual(0);

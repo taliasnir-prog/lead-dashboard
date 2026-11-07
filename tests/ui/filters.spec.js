@@ -179,7 +179,7 @@ test('AC-G.4 (filters) keyboard: Tab order reaches every filter, typing and rese
 });
 
 test('AC-G.1 (filters) small screen: filters stacked, no page scroll, also in the empty state', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
   const ids = ['filter-query', 'filter-status', 'filter-source', 'filter-rep', 'filters-reset'];
   const boxes = [];
   for (const id of ids) boxes.push(await page.getByTestId(id).boundingBox());
@@ -197,11 +197,18 @@ test('AC-G.1 (filters) small screen: filters stacked, no page scroll, also in th
   expect(emptyReset.x + emptyReset.width).toBeLessThanOrEqual(375);
 });
 
-test('AC-G.2 (filters) desktop: all filters and the reset button on one row', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'desktop only');
-  const tops = [];
+test('AC-G.2 (filters) desktop: all filters and the reset button on one row, each at least 44px high', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.endsWith('desktop'), 'desktop only');
+  // Heights may differ by engine (WebKit draws selects taller), so only a minimum is required.
+  const boxes = [];
   for (const id of ['filter-query', 'filter-status', 'filter-source', 'filter-rep', 'filters-reset']) {
-    tops.push(Math.round((await page.getByTestId(id).boundingBox()).y));
+    boxes.push(await page.getByTestId(id).boundingBox());
   }
-  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+  for (const b of boxes) expect(b.height).toBeGreaterThanOrEqual(44);
+  // One row: the fields are bottom-aligned and every pair overlaps vertically.
+  const bottoms = boxes.map((b) => Math.round(b.y + b.height));
+  expect(Math.max(...bottoms) - Math.min(...bottoms)).toBeLessThanOrEqual(2);
+  const top = Math.max(...boxes.map((b) => b.y));
+  const bottom = Math.min(...boxes.map((b) => b.y + b.height));
+  expect(bottom).toBeGreaterThan(top);
 });

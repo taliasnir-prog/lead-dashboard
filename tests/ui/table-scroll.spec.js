@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('AC-G.1 small screen: every header and cell is fully readable at some scroll position', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
 
   const result = await page.getByTestId('table-wrap').evaluate((wrap) => {
     const cells = [...wrap.querySelectorAll('th, td')];
@@ -59,7 +59,7 @@ test('AC-G.1 small screen: every header and cell is fully readable at some scrol
 });
 
 test('AC-G.1 small screen: the name column stays visible while scrolling to the end', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'mobile only');
+  test.skip(!testInfo.project.name.endsWith('mobile'), 'mobile only');
   const wrap = page.getByTestId('table-wrap');
   await wrap.evaluate((w) => { w.scrollLeft = -(w.scrollWidth - w.clientWidth); });
   const wrapBox = await wrap.boundingBox();
