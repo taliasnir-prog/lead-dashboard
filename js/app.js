@@ -2,8 +2,8 @@
 // All text is set with textContent, never innerHTML, so lead data cannot inject markup.
 
 import {
-  toLocalDateString, computeMetrics, countBySource, sortLeads, getPriority, isOverdue,
-  formatCurrency, formatDate, PRIORITY,
+  toLocalDateString, computeMetrics, countBySource, sortLeads, filterLeads, getPriority, isOverdue,
+  formatCurrency, formatDate, PRIORITY, STATUSES, SOURCES, REPS, EMPTY_FILTERS,
 } from './logic.js';
 import { createDemoLeads } from './demo-data.js';
 
@@ -79,9 +79,10 @@ function priorityCell(lead, today) {
   return el('td', { attrs: { 'data-col': 'priority' } }, children);
 }
 
-function renderTable(leads, today) {
+/** Renders the given leads, already filtered and sorted. */
+function renderTable(visibleLeads, today) {
   const tbody = document.querySelector('[data-testid="leads-table"] tbody');
-  tbody.replaceChildren(...sortLeads(leads, today).map((lead) => {
+  tbody.replaceChildren(...visibleLeads.map((lead) => {
     const row = el('tr', { attrs: { 'data-id': lead.id } }, [
       el('td', { attrs: { 'data-col': 'id' } }, [bdi(lead.id)]),
       el('td', { text: lead.name, attrs: { 'data-col': 'name' } }),
@@ -108,12 +109,77 @@ function setupPriorityHelp() {
   });
 }
 
+// ---------- Filters ----------
+
+const filterEls = {
+  form: document.querySelector('[data-testid="filters"]'),
+  query: document.querySelector('[data-testid="filter-query"]'),
+  status: document.querySelector('[data-testid="filter-status"]'),
+  source: document.querySelector('[data-testid="filter-source"]'),
+  rep: document.querySelector('[data-testid="filter-rep"]'),
+};
+
+function fillSelect(select, values) {
+  select.replaceChildren(
+    el('option', { text: 'הכל', attrs: { value: '' } }),
+    ...values.map((v) => el('option', { text: v, attrs: { value: v } })),
+  );
+}
+
+function readFilters() {
+  return {
+    query: filterEls.query.value,
+    status: filterEls.status.value,
+    source: filterEls.source.value,
+    rep: filterEls.rep.value,
+  };
+}
+
+function resetFilterInputs() {
+  filterEls.query.value = EMPTY_FILTERS.query;
+  filterEls.status.value = EMPTY_FILTERS.status;
+  filterEls.source.value = EMPTY_FILTERS.source;
+  filterEls.rep.value = EMPTY_FILTERS.rep;
+}
+
+/** Table, counter and empty state follow the filters. Cards and chart always use all leads. */
+function renderResults(state) {
+  const visible = filterLeads(state.sorted, readFilters());
+  renderTable(visible, state.today);
+  document.querySelector('[data-testid="results-count"]').textContent =
+    `מוצגים ${visible.length} מתוך ${state.leads.length} לידים`;
+  const empty = visible.length === 0;
+  document.querySelector('[data-testid="empty-state"]').hidden = !empty;
+  document.querySelector('[data-testid="table-wrap"]').hidden = empty;
+}
+
+function setupFilters(state) {
+  fillSelect(filterEls.status, STATUSES);
+  fillSelect(filterEls.source, SOURCES);
+  fillSelect(filterEls.rep, REPS);
+  const update = () => renderResults(state);
+  filterEls.form.addEventListener('submit', (event) => event.preventDefault());
+  filterEls.query.addEventListener('input', update);
+  for (const select of [filterEls.status, filterEls.source, filterEls.rep]) {
+    select.addEventListener('change', update);
+  }
+  const reset = () => {
+    resetFilterInputs();
+    update();
+    filterEls.query.focus();
+  };
+  document.querySelector('[data-testid="filters-reset"]').addEventListener('click', reset);
+  document.querySelector('[data-testid="empty-reset"]').addEventListener('click', reset);
+}
+
 function init() {
   const today = toLocalDateString(new Date());
   const leads = createDemoLeads(today);
+  const state = { today, leads, sorted: sortLeads(leads, today) };
   renderMetrics(leads);
   renderChart(leads);
-  renderTable(leads, today);
+  setupFilters(state);
+  renderResults(state);
   setupPriorityHelp();
 }
 

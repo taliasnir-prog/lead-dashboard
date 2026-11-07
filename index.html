@@ -60,7 +60,34 @@
           ומנקודה נוספת לליד חדש. 5 ומעלה גבוהה, 3 עד 4 בינונית, עד 2 נמוכה. לידים סגורים לא בתעדוף.
         </p>
       </div>
+      <form class="filters" role="search" aria-label="חיפוש וסינון לידים" data-testid="filters" novalidate>
+        <div class="field field-query">
+          <label for="filter-query">חיפוש לפי שם</label>
+          <input type="search" id="filter-query" name="query" autocomplete="off"
+                 placeholder="הקלידו חלק מהשם" data-testid="filter-query">
+        </div>
+        <div class="field">
+          <label for="filter-status">סטטוס</label>
+          <select id="filter-status" name="status" data-testid="filter-status"></select>
+        </div>
+        <div class="field">
+          <label for="filter-source">מקור</label>
+          <select id="filter-source" name="source" data-testid="filter-source"></select>
+        </div>
+        <div class="field">
+          <label for="filter-rep">נציג</label>
+          <select id="filter-rep" name="rep" data-testid="filter-rep"></select>
+        </div>
+        <div class="field field-actions">
+          <button type="button" class="secondary-button" data-testid="filters-reset">איפוס מסננים</button>
+        </div>
+      </form>
+      <p class="results-count" aria-live="polite" data-testid="results-count"></p>
       <p class="hint">ממוין לפי עדיפות: הלידים הדחופים למעלה, הסגורים בסוף.</p>
+      <div class="empty-state" hidden data-testid="empty-state">
+        <p>לא נמצאו לידים שמתאימים לחיפוש</p>
+        <button type="button" class="secondary-button" data-testid="empty-reset">איפוס מסננים</button>
+      </div>
       <div class="table-wrap" data-testid="table-wrap" tabindex="0" aria-label="טבלת לידים, אפשר לגלול לרוחב">
         <table class="leads" data-testid="leads-table">
           <caption class="sr-only">כל הלידים, ממוינים לפי עדיפות</caption>

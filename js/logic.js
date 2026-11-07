@@ -144,6 +144,26 @@ export function sortLeads(leads, today) {
   return [...open, ...closed];
 }
 
+// ---------- Search and filters (SPEC.md section 7) ----------
+
+/** Default filter state: empty search and "הכל" ('') in every list. */
+export const EMPTY_FILTERS = Object.freeze({ query: '', status: '', source: '', rep: '' });
+
+/**
+ * Leads matching all conditions together (AND). '' means "הכל" for a list.
+ * The search matches part of the name, ignoring spaces at the edges and letter case.
+ * Returns a new array in the input order; the input array and leads are not changed.
+ */
+export function filterLeads(leads, filters = EMPTY_FILTERS) {
+  const query = (filters.query ?? '').trim().toLowerCase();
+  const { status = '', source = '', rep = '' } = filters;
+  return leads.filter((lead) =>
+    (query === '' || lead.name.toLowerCase().includes(query))
+    && (status === '' || lead.status === status)
+    && (source === '' || lead.source === source)
+    && (rep === '' || lead.rep === rep));
+}
+
 // ---------- Display formatting ----------
 
 /** 60000 -> '60,000 ₪'. Fixed format, independent of the browser locale. */
