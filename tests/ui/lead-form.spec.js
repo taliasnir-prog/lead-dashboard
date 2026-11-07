@@ -283,7 +283,7 @@ test('AC-5.4 add a valid lead: L-031, table, cards, chart and counter update', a
   await expect(page.getByTestId('metric-new')).toHaveText('8');
   await expect(barCount(page, 'הפניה')).toHaveText('6');
   await expect(count(page)).toHaveText('מוצגים 31 מתוך 31 לידים');
-  await expect(page.getByTestId('flash')).toHaveText('הליד L-031 נוסף.');
+  await expect(page.getByTestId('flash')).toHaveText('הליד L-031 נוסף ונשמר.');
   await expect(detailsBtn(page, 'L-031')).toBeFocused();
 });
 
@@ -318,7 +318,7 @@ test('AC-5.4 add while filtered: id from all leads, hidden lead explained, dynam
   await page.getByTestId('dialog-save').click();
   await expect(row(page, 'L-032')).toHaveCount(1);
   await expect(count(page)).toHaveText('מוצגים 9 מתוך 32 לידים');
-  await expect(page.getByTestId('flash')).toHaveText('הליד L-032 נוסף.');
+  await expect(page.getByTestId('flash')).toHaveText('הליד L-032 נוסף ונשמר.');
 });
 
 test('AC-5.4 keyboard only: open with Enter, type, save with Enter; cancel with Space', async ({ page }) => {

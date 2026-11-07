@@ -1,5 +1,5 @@
-// Dashboard UI: view, filters, lead details, add and edit.
-// Data lives in memory only at this stage (no localStorage yet).
+// Dashboard UI: view, filters, lead details, add, edit, local saving and reset.
+// Data is saved in localStorage (js/storage.js); if that fails, the page keeps working in memory.
 // All text is set with textContent, never innerHTML, so lead data cannot inject markup.
 
 import {
@@ -8,6 +8,7 @@ import {
   PRIORITY, STATUSES, SOURCES, REPS, INTEREST_LEVELS, EMPTY_FILTERS, ADD_FIELDS, EDIT_FIELDS,
 } from './logic.js';
 import { createDemoLeads } from './demo-data.js';
+import { getStorage, loadLeads, saveLeads } from './storage.js';
 
 const STATUS_CLASS = {
   'חדש': 'st-new',
@@ -40,7 +41,22 @@ const bdi = (text, attrs) => el('bdi', { text, attrs });
 
 // ---------- State ----------
 
-const state = { today: '', leads: [], sorted: [] };
+const state = {
+  today: '', leads: [], sorted: [],
+  storage: null, canRead: false, saved: false, invalid: false,
+};
+
+/** Saves the current leads. Never writes when the stored data could not be read. Returns true if saved. */
+function persist() {
+  state.saved = state.canRead ? saveLeads(state.storage, state.leads) : false;
+  updateStorageNotices();
+  return state.saved;
+}
+
+function updateStorageNotices() {
+  $('storage-unavailable').hidden = state.saved;
+  $('storage-invalid').hidden = !state.invalid;
+}
 
 /** Replace the whole list (never mutate it) and redraw everything that depends on it. */
 function setLeads(leads) {
@@ -206,9 +222,10 @@ function setupFilters() {
 
 // ---------- Success message ----------
 
-function showFlash(text) {
+function showFlash(text, { warning = false } = {}) {
   const flash = $('flash');
   flash.textContent = text;
+  flash.classList.toggle('is-warning', warning);
   flash.hidden = false;
 }
 
@@ -328,7 +345,7 @@ function handleSave(event) {
     id = dialogState.leadId;
     setLeads(state.leads.map((l) => (l.id === id ? applyEdit(l, result.values) : l)));
   }
-  dialogState.saved = { mode, id };
+  dialogState.saved = { mode, id, stored: persist() };
   dialog.close();
 }
 
@@ -344,22 +361,22 @@ function afterClose() {
     return;
   }
   const button = document.querySelector(`[data-testid="details-button"][data-id="${saved.id}"]`);
-  if (saved.mode === 'add') {
-    showFlash(button
-      ? `הליד ${saved.id} נוסף.`
-      : `הליד ${saved.id} נוסף, אבל הוא לא מוצג כרגע כי הוא לא מתאים לחיפוש או לסינון הפעילים.`);
-  } else {
-    showFlash(button
-      ? `השינויים בליד ${saved.id} נשמרו.`
-      : `השינויים בליד ${saved.id} נשמרו. הליד לא מוצג כרגע כי הוא כבר לא מתאים לחיפוש או לסינון הפעילים.`);
-  }
+  // Never claim the data is saved in the browser when saving failed.
+  const action = saved.mode === 'add'
+    ? (saved.stored ? `הליד ${saved.id} נוסף ונשמר.` : `הליד ${saved.id} נוסף, אבל לא נשמר בדפדפן ויימחק ברענון.`)
+    : (saved.stored ? `השינויים בליד ${saved.id} נשמרו.` : `השינויים בליד ${saved.id} עודכנו, אבל לא נשמרו בדפדפן ויימחקו ברענון.`);
+  const hidden = saved.mode === 'add'
+    ? ' הוא לא מוצג כרגע כי הוא לא מתאים לחיפוש או לסינון הפעילים.'
+    : ' הליד לא מוצג כרגע כי הוא כבר לא מתאים לחיפוש או לסינון הפעילים.';
+  showFlash(action + (button ? '' : hidden), { warning: !saved.stored });
   (button ?? $('flash')).focus();
 }
 
-/** Keeps Tab and Shift+Tab inside the open dialog. */
+/** Keeps Tab and Shift+Tab inside the dialog that received the event. */
 function trapFocus(event) {
   if (event.key !== 'Tab') return;
-  const focusables = [...dialog.querySelectorAll('input, select, textarea, button')]
+  const box = event.currentTarget;
+  const focusables = [...box.querySelectorAll('input, select, textarea, button')]
     .filter((node) => !node.disabled && node.getClientRects().length > 0);
   if (focusables.length === 0) return;
   const first = focusables[0];
@@ -388,6 +405,40 @@ function setupDialog() {
   });
 }
 
+// ---------- Reset to demo data ----------
+
+const resetDialog = $('reset-dialog');
+let resetConfirmed = false;
+
+function confirmReset() {
+  resetConfirmed = true;
+  resetFilterInputs();
+  clearFlash();
+  state.invalid = false;
+  setLeads(createDemoLeads(state.today));
+  persist();
+  resetDialog.close();
+}
+
+function setupReset() {
+  $('reset-button').addEventListener('click', () => {
+    resetConfirmed = false;
+    resetDialog.showModal();
+    $('reset-cancel').focus(); // safe default
+  });
+  $('reset-cancel').addEventListener('click', () => resetDialog.close());
+  $('reset-confirm').addEventListener('click', confirmReset);
+  resetDialog.addEventListener('keydown', trapFocus);
+  resetDialog.addEventListener('close', () => {
+    if (resetConfirmed) {
+      showFlash(state.saved
+        ? 'נתוני הדמה שוחזרו: 30 לידים.'
+        : 'נתוני הדמה שוחזרו: 30 לידים, אבל לא נשמרו בדפדפן.', { warning: !state.saved });
+    }
+    $('reset-button').focus();
+  });
+}
+
 // ---------- Start ----------
 
 function init() {
@@ -395,7 +446,14 @@ function init() {
   setupFilters();
   setupPriorityHelp();
   setupDialog();
-  setLeads(createDemoLeads(state.today));
+  setupReset();
+  state.storage = getStorage(window);
+  const loaded = loadLeads(state.storage, state.today);
+  state.canRead = loaded.canRead;
+  state.saved = loaded.saved;
+  state.invalid = loaded.invalid;
+  setLeads(loaded.leads);
+  updateStorageNotices();
 }
 
 init();

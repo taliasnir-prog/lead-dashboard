@@ -20,6 +20,19 @@
       <strong>נתוני דמה</strong> - כל השמות והפרטים בדאשבורד פיקטיביים
     </p>
 
+    <div class="storage-bar" data-testid="storage-bar">
+      <p class="storage-note" data-testid="storage-note">
+        השינויים נשמרים רק בדפדפן הזה ואינם מסתנכרנים בין מכשירים או משתמשים.
+      </p>
+      <button type="button" class="secondary-button" data-testid="reset-button">איפוס לנתוני הדמה</button>
+    </div>
+    <p class="notice notice-warning" role="alert" hidden data-testid="storage-invalid">
+      הנתונים השמורים לא היו תקינים, ולכן נטענו נתוני הדמה.
+    </p>
+    <p class="notice notice-error" role="alert" hidden data-testid="storage-unavailable">
+      לא ניתן לשמור בדפדפן הזה. השינויים לא יישמרו לאחר רענון.
+    </p>
+
     <section aria-labelledby="metrics-title" class="section">
       <h2 id="metrics-title">תמונת מצב</h2>
       <div class="cards" data-testid="cards">
@@ -198,6 +211,18 @@
         <button type="button" class="secondary-button" data-testid="dialog-cancel">ביטול</button>
       </footer>
     </form>
+  </dialog>
+
+  <dialog class="confirm-dialog" aria-labelledby="reset-title" aria-describedby="reset-desc" data-testid="reset-dialog">
+    <h2 id="reset-title">איפוס לנתוני הדמה</h2>
+    <p id="reset-desc">
+      כל השינויים והלידים שנוספו יימחקו, ו-30 לידי הדמה יחזרו עם תאריכים לפי היום.
+      גם החיפוש והמסננים יתאפסו. אי אפשר לבטל את הפעולה.
+    </p>
+    <div class="dialog-footer">
+      <button type="button" class="danger-button" data-testid="reset-confirm">איפוס</button>
+      <button type="button" class="secondary-button" data-testid="reset-cancel">ביטול</button>
+    </div>
   </dialog>
 </body>
 </html>
