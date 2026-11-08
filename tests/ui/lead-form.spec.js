@@ -35,10 +35,27 @@ async function fillValidAdd(page, { name = 'ליד בדיקה', source = 'הפנ
 
 // ---------- AC-5.1 open and view ----------
 
-test('AC-5.1 details button sits in the name cell with an accessible name; still 9 columns', async ({ page }) => {
+test('AC-5.1 the lead name opens the details: link style, underline always, accessible name, still 9 columns', async ({ page }) => {
   await expect(page.locator('[data-testid="leads-table"] thead th')).toHaveCount(9);
-  await expect(cell(page, 'L-009', 'name').getByRole('button', { name: 'פרטים של מורן זילבר' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^פרטים של / })).toHaveCount(30);
+  const name = cell(page, 'L-009', 'name').getByRole('button', { name: 'פרטי ליד: מורן זילבר' });
+  await expect(name).toBeVisible();
+  await expect(name).toHaveText('מורן זילבר');
+  await expect(name).toHaveAttribute('aria-haspopup', 'dialog');
+  await expect(page.getByRole('button', { name: /^פרטי ליד: / })).toHaveCount(30);
+  // No separate "פרטים" button any more.
+  await expect(page.locator('[data-testid="leads-table"] tbody').getByText('פרטים', { exact: true })).toHaveCount(0);
+  // Underlined without hover, in the link colour.
+  const style = await name.evaluate((b) => {
+    const cs = getComputedStyle(b);
+    return { line: cs.textDecorationLine, color: cs.color };
+  });
+  expect(style.line).toContain('underline');
+  expect(style.color).toBe('rgb(37, 87, 214)');
+  await name.click();
+  await expect(dialog(page)).toBeVisible();
+  await expect(page.getByTestId('dialog-title')).toHaveText('פרטי ליד L-009');
+  await page.keyboard.press('Escape');
+  await expect(name).toBeFocused();
 });
 
 test('AC-5.1 mouse: details show all 12 fields, read-only ones as text', async ({ page }) => {

@@ -111,17 +111,24 @@ function renderChart(leads) {
 
 // ---------- Table ----------
 
+/**
+ * The lead name itself opens the details (SPEC 1.4). It is a button styled as a link, with an
+ * underline always, because it opens a dialog and does not navigate. The accessible name keeps
+ * the visible name and adds what the button does.
+ */
 function nameCell(lead) {
   const button = el('button', {
-    className: 'details-button',
-    text: 'פרטים',
+    className: 'name-link name-text',
+    text: lead.name,
     attrs: {
-      type: 'button', 'data-testid': 'details-button', 'data-id': lead.id, 'aria-label': `פרטים של ${lead.name}`,
+      type: 'button',
+      'data-testid': 'details-button',
+      'data-id': lead.id,
+      'aria-label': `פרטי ליד: ${lead.name}`,
+      'aria-haspopup': 'dialog',
     },
   });
-  return el('td', { attrs: { 'data-col': 'name' } }, [
-    el('div', { className: 'name-cell' }, [el('span', { className: 'name-text', text: lead.name }), button]),
-  ]);
+  return el('td', { attrs: { 'data-col': 'name' } }, [button]);
 }
 
 function followUpCell(lead, today) {
