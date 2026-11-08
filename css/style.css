@@ -312,25 +312,30 @@ table.leads {
 }
 .form-error { margin: 0 0 12px; padding: 8px 12px; background: var(--overdue-bg); border-radius: 8px; }
 
-/* Name cell with the details button */
-.name-cell { display: flex; align-items: center; gap: 8px; }
-.details-button {
+/* The lead name opens the details: a button that looks like a link, underlined always (SPEC 1.4). */
+.name-link {
+  display: inline-block; /* not flex: lets a very long single word wrap at max-width */
   min-height: 32px;
-  padding: 2px 10px;
-  border: 1px solid #c4cad4;
-  border-radius: 999px;
-  background: var(--surface);
+  padding: 4px 0;
+  border: 0;
+  background: none;
   color: var(--accent);
   font: inherit;
-  font-size: 0.85rem;
   font-weight: 600;
+  text-align: start;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
-.details-button:hover { background: var(--accent-soft); }
+.name-link:hover { color: #1d47b3; text-decoration-thickness: 2px; }
+/* Long names (up to 50 characters) wrap instead of widening the fixed name column. */
+.leads td[data-col="name"] { white-space: normal; }
+/* break-word: a word is split only if it cannot fit on its own line (never "רבינוב/יץ"). */
+.name-link { width: max-content; max-width: 16rem; overflow-wrap: break-word; }
 @media (max-width: 600px) {
-  .name-cell { flex-direction: column; align-items: flex-start; gap: 4px; }
   /* Touch target: at least 44x44 on small screens (SPEC section 4). */
-  .details-button { min-height: 44px; min-width: 44px; padding: 4px 14px; }
+  .name-link { min-height: 44px; min-width: 44px; max-width: 6.5rem; padding: 10px 0; } /* name column + follow-up column must fit in 307px */
 }
 
 /* Success message after save */

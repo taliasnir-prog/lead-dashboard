@@ -1,5 +1,5 @@
 // SPEC section 4: on small screens every visible button is at least 44px high (and 44px wide),
-// on the page and inside every dialog. Found in the final review: the "פרטים" button was 28px.
+// on the page and inside every dialog (Issue #1). Since SPEC 1.4 the lead name is that button.
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }, testInfo) => {
@@ -18,7 +18,7 @@ async function smallButtons(page, root = 'body') {
     .map((b) => `${b.label ?? b.text}: ${Math.round(b.width)}x${Math.round(b.height)}`));
 }
 
-test('AC-G.1 small screen: every button on the page is at least 44x44, including all 30 "פרטים" buttons', async ({ page }) => {
+test('AC-G.1 small screen: every button on the page is at least 44x44, including all 30 lead names that open the details', async ({ page }) => {
   await expect(page.getByTestId('details-button')).toHaveCount(30);
   expect(await smallButtons(page)).toEqual([]);
   const sizes = await page.getByTestId('details-button').evaluateAll((bs) => bs.map((b) => b.getBoundingClientRect().height));
