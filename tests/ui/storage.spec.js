@@ -79,7 +79,7 @@ test('AC-10.1 an edit is kept after reload', async ({ page }) => {
 test('AC-10.2 an added lead is kept after reload and the next add does not reuse its id', async ({ page }) => {
   await open(page);
   await addLead(page, 'ליד לפני רענון');
-  await expect(page.getByTestId('flash')).toHaveText('הליד L-031 נוסף ונשמר.');
+  await expect(page.getByTestId('flash')).toHaveText('הליד ליד לפני רענון (L-031) נוסף ונשמר.');
   await page.reload();
   await expect(rows(page)).toHaveCount(31);
   await expect(count(page)).toHaveText('מוצגים 31 מתוך 31 לידים');
@@ -290,7 +290,7 @@ for (const [label, init] of Object.entries(BREAKERS)) {
 
     await addLead(page);
     await expect(row(page, 'L-031')).toHaveCount(1);
-    await expect(page.getByTestId('flash')).toHaveText('הליד L-031 נוסף, אבל לא נשמר בדפדפן ויימחק ברענון.');
+    await expect(page.getByTestId('flash')).toHaveText('הליד ליד בדיקה (L-031) נוסף, אבל לא נשמר בדפדפן ויימחק ברענון.');
 
     await page.getByTestId('reset-button').click();
     await page.getByTestId('reset-confirm').click();

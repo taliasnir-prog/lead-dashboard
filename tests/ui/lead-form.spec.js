@@ -300,8 +300,8 @@ test('AC-5.4 add a valid lead: L-031, table, cards, chart and counter update', a
   await expect(page.getByTestId('metric-new')).toHaveText('8');
   await expect(barCount(page, 'הפניה')).toHaveText('6');
   await expect(count(page)).toHaveText('מוצגים 31 מתוך 31 לידים');
-  await expect(page.getByTestId('flash')).toHaveText('הליד L-031 נוסף ונשמר.');
-  await expect(detailsBtn(page, 'L-031')).toBeFocused();
+  await expect(page.getByTestId('flash')).toHaveText('הליד ליד בדיקה (L-031) נוסף ונשמר.');
+  await expect(page.getByTestId('flash')).toBeFocused(); // SPEC 1.5: focus on the message, "הצג ליד" is next
 });
 
 test('AC-5.4 two consecutive adds get L-031 and L-032; counter 32', async ({ page }) => {
@@ -325,7 +325,7 @@ test('AC-5.4 add while filtered: id from all leads, hidden lead explained, dynam
   await page.getByTestId('dialog-save').click();
   await expect(row(page, 'L-031')).toHaveCount(0);
   await expect(count(page)).toHaveText('מוצגים 8 מתוך 31 לידים');
-  await expect(page.getByTestId('flash')).toContainText('הליד L-031 נוסף');
+  await expect(page.getByTestId('flash')).toContainText('הליד ליד בדיקה (L-031) נוסף');
   await expect(page.getByTestId('flash')).toContainText('לא מוצג כרגע');
   await expect(page.getByTestId('flash')).toBeFocused();
   await expect(page.getByTestId('filter-source')).toHaveValue('Google');
@@ -335,7 +335,7 @@ test('AC-5.4 add while filtered: id from all leads, hidden lead explained, dynam
   await page.getByTestId('dialog-save').click();
   await expect(row(page, 'L-032')).toHaveCount(1);
   await expect(count(page)).toHaveText('מוצגים 9 מתוך 32 לידים');
-  await expect(page.getByTestId('flash')).toHaveText('הליד L-032 נוסף ונשמר.');
+  await expect(page.getByTestId('flash')).toHaveText('הליד ליד גוגל (L-032) נוסף ונשמר.');
 });
 
 test('AC-5.4 keyboard only: open with Enter, type, save with Enter; cancel with Space', async ({ page }) => {

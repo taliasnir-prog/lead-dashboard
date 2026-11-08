@@ -156,6 +156,24 @@ test('AC-G.4 contrast: success message, empty state', async ({ page }) => {
   expect(await contrast(page)).toEqual([]);
 });
 
+test('AC-G.4 contrast and focus: message after adding with "הצג ליד", and the highlighted row (SPEC 1.5)', async ({ page }) => {
+  await page.getByTestId('add-lead-button').click();
+  await page.getByTestId('field-name').fill('ליד ניגודיות');
+  await page.getByTestId('field-source').selectOption('הפניה');
+  await page.getByTestId('field-rep').selectOption('נועה ברק');
+  await page.getByTestId('field-followUpDate').fill('2026-11-06'); // overdue: the tag sits on the overdue background
+  await page.getByTestId('dialog-save').click();
+  await expect(page.getByTestId('show-lead')).toBeVisible();
+  expect(await contrast(page)).toEqual([]);
+  // "הצג ליד" reached with the keyboard shows a clear focus outline on the message background.
+  await page.keyboard.press('Tab');
+  await expect(page.getByTestId('show-lead')).toBeFocused();
+  expect(await page.getByTestId('show-lead').evaluate((b) => b.matches(':focus-visible'))).toBe(true);
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('highlight-tag')).toBeVisible();
+  expect(await contrast(page)).toEqual([]);
+});
+
 test('AC-G.4 contrast: add dialog with validation errors, edit dialog, reset dialog', async ({ page }) => {
   await page.getByTestId('add-lead-button').click();
   await page.getByTestId('dialog-save').click();
@@ -178,6 +196,6 @@ test('AC-G.4 contrast: storage notices and the warning success message', async (
   await page.locator('[data-testid="details-button"][data-id="L-009"]').click();
   await page.getByTestId('dialog-save').click();
   await expect(page.getByTestId('storage-unavailable')).toBeVisible();
-  await expect(page.getByTestId('flash')).toHaveClass(/is-warning/);
+  await expect(page.getByTestId('flash-box')).toHaveClass(/is-warning/); // SPEC 1.5: the box holds the text and "הצג ליד"
   expect(await contrast(page)).toEqual([]);
 });
