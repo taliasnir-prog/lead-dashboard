@@ -144,6 +144,36 @@ export function sortLeads(leads, today) {
   return [...open, ...closed];
 }
 
+// ---------- Sort selector (SPEC 1.5, AC-3.3) ----------
+
+export const SORT_MODES = Object.freeze({ PRIORITY: 'priority', RECENT: 'recent' });
+export const DEFAULT_SORT = SORT_MODES.PRIORITY;
+export const SORT_LABELS = Object.freeze({
+  [SORT_MODES.PRIORITY]: 'לפי עדיפות',
+  [SORT_MODES.RECENT]: 'נוספו לאחרונה',
+});
+
+/** The numeric part of a lead id: "L-031" -> 31. */
+export function idNumber(id) {
+  return Number(String(id).slice(2)) || 0;
+}
+
+/**
+ * "נוספו לאחרונה": all leads, closed included, newest createdAt first. createdAt has no time,
+ * so leads added on the same day are ordered by the numeric part of the id, highest first.
+ */
+export function sortLeadsByRecent(leads) {
+  return [...leads].sort((a, b) => {
+    if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? 1 : -1;
+    return idNumber(b.id) - idNumber(a.id);
+  });
+}
+
+/** Sorts by the selected mode. An unknown mode falls back to the default priority order. */
+export function sortLeadsBy(mode, leads, today) {
+  return mode === SORT_MODES.RECENT ? sortLeadsByRecent(leads) : sortLeads(leads, today);
+}
+
 // ---------- Search and filters (SPEC.md section 7) ----------
 
 /** Default filter state: empty search and "הכל" ('') in every list. */

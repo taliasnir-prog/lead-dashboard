@@ -3,9 +3,10 @@
 // All text is set with textContent, never innerHTML, so lead data cannot inject markup.
 
 import {
-  toLocalDateString, computeMetrics, countBySource, sortLeads, filterLeads, getPriority, isOverdue,
+  toLocalDateString, computeMetrics, countBySource, sortLeadsBy, filterLeads, getPriority, isOverdue,
   formatCurrency, formatDate, validateLeadForm, addLead, canAddLead, applyEdit, LIMIT_MESSAGE,
   PRIORITY, STATUSES, SOURCES, REPS, INTEREST_LEVELS, EMPTY_FILTERS, ADD_FIELDS, EDIT_FIELDS,
+  SORT_MODES, SORT_LABELS, DEFAULT_SORT,
 } from './logic.js';
 import { createDemoLeads } from './demo-data.js';
 import { getStorage, loadLeads, saveLeads } from './storage.js';
@@ -42,9 +43,12 @@ const bdi = (text, attrs) => el('bdi', { text, attrs });
 // ---------- State ----------
 
 const state = {
-  today: '', leads: [], sorted: [],
+  today: '', leads: [], sorted: [], sortMode: DEFAULT_SORT,
   storage: null, canRead: false, saved: false, invalid: false, rejected: false,
+  highlightId: null, highlightTimer: null,
 };
+
+const HIGHLIGHT_MS = 3000;
 
 /** Saves the current leads. Never writes when the stored data could not be read. Returns true if saved. */
 function persist() {
@@ -73,7 +77,7 @@ function updateAddAvailability() {
 /** Replace the whole list (never mutate it) and redraw everything that depends on it. */
 function setLeads(leads) {
   state.leads = leads;
-  state.sorted = sortLeads(leads, state.today);
+  state.sorted = sortLeadsBy(state.sortMode, leads, state.today);
   renderMetrics(state.leads);
   renderChart(state.leads);
   renderResults();
@@ -165,8 +169,35 @@ function renderTable(visibleLeads, today) {
       priorityCell(lead, today),
     ]);
     if (isOverdue(lead, today)) row.classList.add('is-overdue');
+    if (lead.id === state.highlightId) markHighlight(row);
     return row;
   }));
+}
+
+// ---------- Row highlight after "הצג ליד" (SPEC 1.5, AC-5.9) ----------
+
+/**
+ * A thick frame and a text tag, not colour alone. The row background is not touched,
+ * so an overdue row keeps its background and its "באיחור" tag. The tag sits under the name:
+ * that column stays in view while the table scrolls sideways, and it does not widen a column.
+ */
+function markHighlight(row) {
+  row.classList.add('is-highlighted');
+  const nameCellEl = row.querySelector('td[data-col="name"]');
+  if (!nameCellEl.querySelector('.highlight-tag')) {
+    nameCellEl.append(el('span', { className: 'highlight-tag', text: 'נוסף עכשיו', attrs: { 'data-testid': 'highlight-tag' } }));
+  }
+}
+
+/** Ends the highlight in place, without redrawing the table, so focus stays on the name. */
+function clearHighlight() {
+  clearTimeout(state.highlightTimer);
+  state.highlightTimer = null;
+  state.highlightId = null;
+  for (const row of document.querySelectorAll('.leads tr.is-highlighted')) {
+    row.classList.remove('is-highlighted');
+    row.querySelector('.highlight-tag')?.remove();
+  }
 }
 
 function setupPriorityHelp() {
@@ -216,9 +247,37 @@ function renderResults() {
   const visible = filterLeads(state.sorted, readFilters());
   renderTable(visible, state.today);
   $('results-count').textContent = `מוצגים ${visible.length} מתוך ${state.leads.length} לידים`;
+  renderSortInfo();
   const empty = visible.length === 0;
   $('empty-state').hidden = !empty;
   $('table-wrap').hidden = empty;
+}
+
+// ---------- Sort selector (SPEC 1.5, AC-3.3, AC-3.4) ----------
+
+const SORT_HINTS = {
+  [SORT_MODES.PRIORITY]: 'ממוין לפי עדיפות: הלידים הדחופים למעלה, הסגורים בסוף.',
+  [SORT_MODES.RECENT]: 'ממוין לפי תאריך ההוספה: האחרונים שנוספו למעלה, כולל לידים סגורים.',
+};
+
+function renderSortInfo() {
+  $('sort-status').textContent = `מיון: ${SORT_LABELS[state.sortMode]}`;
+  $('sort-hint').textContent = SORT_HINTS[state.sortMode];
+  $('table-caption').textContent = state.sortMode === SORT_MODES.RECENT
+    ? 'כל הלידים, מהאחרון שנוסף לראשון'
+    : 'כל הלידים, ממוינים לפי עדיפות';
+}
+
+/** Changes only the order: search, filters, cards, chart and the message stay as they are. */
+function setSortMode(mode) {
+  state.sortMode = Object.values(SORT_MODES).includes(mode) ? mode : DEFAULT_SORT;
+  $('sort-mode').value = state.sortMode;
+  state.sorted = sortLeadsBy(state.sortMode, state.leads, state.today);
+  renderResults();
+}
+
+function setupSort() {
+  $('sort-mode').addEventListener('change', (event) => setSortMode(event.currentTarget.value));
 }
 
 function setupFilters() {
@@ -242,17 +301,51 @@ function setupFilters() {
 
 // ---------- Success message ----------
 
-function showFlash(text, { warning = false } = {}) {
-  const flash = $('flash');
-  flash.textContent = text;
-  flash.classList.toggle('is-warning', warning);
-  flash.hidden = false;
+/** `content` is a string or a list of strings and nodes. `showLeadId` adds the "הצג ליד" button. */
+function showFlash(content, { warning = false, showLeadId = null } = {}) {
+  const box = $('flash-box');
+  $('flash').replaceChildren(...[].concat(content));
+  box.classList.toggle('is-warning', warning);
+  const action = $('show-lead');
+  action.hidden = showLeadId === null;
+  action.dataset.id = showLeadId ?? '';
+  box.hidden = false;
 }
 
 function clearFlash() {
-  const flash = $('flash');
-  flash.hidden = true;
-  flash.textContent = '';
+  $('flash-box').hidden = true;
+  $('flash').textContent = '';
+  $('show-lead').hidden = true;
+  $('show-lead').dataset.id = '';
+}
+
+/** The message after adding: name and id, and whether it was saved in the browser (SPEC 1.5). */
+function addedMessage(lead, stored, hidden) {
+  const parts = ['הליד ', bdi(lead.name), ' (', bdi(lead.id), ')'];
+  parts.push(stored ? ' נוסף ונשמר.' : ' נוסף, אבל לא נשמר בדפדפן ויימחק ברענון.');
+  if (hidden) parts.push(' הוא לא מוצג כרגע כי הוא לא מתאים לחיפוש או לסינון הפעילים.');
+  return parts;
+}
+
+/**
+ * "הצג ליד": clears search and filters, keeps the sort, scrolls to the row, focuses its name and
+ * highlights the row for about 3 seconds. The details dialog is not opened.
+ */
+function showAddedLead() {
+  const id = $('show-lead').dataset.id;
+  const lead = state.leads.find((l) => l.id === id);
+  if (!lead) return;
+  const warning = $('flash-box').classList.contains('is-warning');
+  clearHighlight();
+  resetFilterInputs();
+  state.highlightId = id;
+  renderResults();
+  // The lead is shown now: drop "not shown", keep whether it was saved in the browser.
+  showFlash(addedMessage(lead, !warning, false), { warning, showLeadId: id });
+  const button = document.querySelector(`[data-testid="details-button"][data-id="${id}"]`);
+  button.scrollIntoView({ block: 'center', inline: 'nearest' });
+  button.focus({ preventScroll: true });
+  state.highlightTimer = setTimeout(clearHighlight, HIGHLIGHT_MS);
 }
 
 // ---------- Lead dialog (details, edit, add) ----------
@@ -392,12 +485,18 @@ function afterClose() {
   }
   const button = document.querySelector(`[data-testid="details-button"][data-id="${saved.id}"]`);
   // Never claim the data is saved in the browser when saving failed.
-  const action = saved.mode === 'add'
-    ? (saved.stored ? `הליד ${saved.id} נוסף ונשמר.` : `הליד ${saved.id} נוסף, אבל לא נשמר בדפדפן ויימחק ברענון.`)
-    : (saved.stored ? `השינויים בליד ${saved.id} נשמרו.` : `השינויים בליד ${saved.id} עודכנו, אבל לא נשמרו בדפדפן ויימחקו ברענון.`);
-  const hidden = saved.mode === 'add'
-    ? ' הוא לא מוצג כרגע כי הוא לא מתאים לחיפוש או לסינון הפעילים.'
-    : ' הליד לא מוצג כרגע כי הוא כבר לא מתאים לחיפוש או לסינון הפעילים.';
+  if (saved.mode === 'add') {
+    // Adding does not change the sort, search or filters. Focus goes to the message,
+    // and "הצג ליד" is the next stop for Tab (SPEC 1.5, AC-5.8).
+    const lead = state.leads.find((l) => l.id === saved.id);
+    showFlash(addedMessage(lead, saved.stored, !button), { warning: !saved.stored, showLeadId: saved.id });
+    $('flash').focus();
+    return;
+  }
+  const action = saved.stored
+    ? `השינויים בליד ${saved.id} נשמרו.`
+    : `השינויים בליד ${saved.id} עודכנו, אבל לא נשמרו בדפדפן ויימחקו ברענון.`;
+  const hidden = ' הליד לא מוצג כרגע כי הוא כבר לא מתאים לחיפוש או לסינון הפעילים.';
   showFlash(action + (button ? '' : hidden), { warning: !saved.stored });
   (button ?? $('flash')).focus();
 }
@@ -426,6 +525,7 @@ function setupDialog() {
   $('dialog-cancel').addEventListener('click', () => dialog.close());
   dialog.addEventListener('keydown', trapFocus);
   dialog.addEventListener('close', afterClose);
+  $('show-lead').addEventListener('click', showAddedLead);
   $('add-lead-button').addEventListener('click', (event) => {
     if (canAddLead(state.leads)) openDialog('add', null, event.currentTarget);
   });
@@ -446,6 +546,10 @@ function confirmReset() {
   resetConfirmed = true;
   resetFilterInputs();
   clearFlash();
+  clearHighlight();
+  // The sort is not kept: reset returns to the default (SPEC 1.5, AC-10.10).
+  state.sortMode = DEFAULT_SORT;
+  $('sort-mode').value = DEFAULT_SORT;
   state.invalid = false;
   // "Today" is recalculated here: the page may have stayed open past midnight (SPEC 1.3, AC-10.9).
   state.today = toLocalDateString(new Date());
@@ -477,7 +581,10 @@ function setupReset() {
 
 function init() {
   state.today = toLocalDateString(new Date());
+  // The sort is not saved: every load starts from the default, even if the browser restored the field.
+  $('sort-mode').value = DEFAULT_SORT;
   setupFilters();
+  setupSort();
   setupPriorityHelp();
   setupDialog();
   setupReset();

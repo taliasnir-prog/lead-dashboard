@@ -346,8 +346,55 @@ table.leads {
   background: var(--st-won-bg);
   color: var(--st-won-text);
   font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
 }
 .flash[hidden] { display: none; }
+.flash-text { margin: 0; flex: 1 1 16rem; min-width: 0; overflow-wrap: break-word; }
+.flash-action[hidden] { display: none; }
+
+/* Results counter, active sort and the sort selector (SPEC 1.5) */
+.results-bar {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.results-summary { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.results-bar .results-count { margin: 0; }
+.sort-status { margin: 0; color: var(--muted); font-weight: 600; }
+.field-sort { width: 14rem; }
+@media (max-width: 600px) {
+  .results-bar { flex-direction: column; align-items: stretch; }
+  .field-sort { width: 100%; }
+}
+
+/* Row shown by "הצג ליד": a frame and a text tag, not colour alone. The background is not
+   changed, so overdue rows keep their background and the "באיחור" tag stays visible. */
+.leads tr.is-highlighted td {
+  box-shadow: inset 0 3px 0 var(--accent), inset 0 -3px 0 var(--accent);
+}
+.leads tr.is-highlighted td[data-col="name"] {
+  box-shadow: inset 0 3px 0 var(--accent), inset 0 -3px 0 var(--accent), inset -1px 0 0 var(--border);
+}
+/* RTL: the id cell is the right edge of the row, the priority cell the left edge. */
+.leads tr.is-highlighted td[data-col="id"] { box-shadow: inset 0 3px 0 var(--accent), inset 0 -3px 0 var(--accent), inset -4px 0 0 var(--accent); }
+.leads tr.is-highlighted td[data-col="priority"] { box-shadow: inset 0 3px 0 var(--accent), inset 0 -3px 0 var(--accent), inset 4px 0 0 var(--accent); }
+.highlight-tag {
+  display: block;
+  width: max-content;
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
 
 /* Dialog */
 .lead-dialog {

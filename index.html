@@ -103,16 +103,31 @@
           <button type="button" class="secondary-button" data-testid="filters-reset">איפוס מסננים</button>
         </div>
       </form>
-      <p class="results-count" aria-live="polite" data-testid="results-count"></p>
-      <p class="flash" role="status" tabindex="-1" hidden data-testid="flash"></p>
-      <p class="hint">ממוין לפי עדיפות: הלידים הדחופים למעלה, הסגורים בסוף.</p>
+      <div class="results-bar">
+        <div class="results-summary">
+          <p class="results-count" aria-live="polite" data-testid="results-count"></p>
+          <p class="sort-status" aria-live="polite" data-testid="sort-status"></p>
+        </div>
+        <div class="field field-sort">
+          <label for="sort-mode">מיון</label>
+          <select id="sort-mode" autocomplete="off" data-testid="sort-mode">
+            <option value="priority">לפי עדיפות</option>
+            <option value="recent">נוספו לאחרונה</option>
+          </select>
+        </div>
+      </div>
+      <div class="flash" hidden data-testid="flash-box">
+        <p class="flash-text" role="status" tabindex="-1" data-testid="flash"></p>
+        <button type="button" class="secondary-button flash-action" hidden data-testid="show-lead">הצג ליד</button>
+      </div>
+      <p class="hint" data-testid="sort-hint"></p>
       <div class="empty-state" hidden data-testid="empty-state">
         <p>לא נמצאו לידים שמתאימים לחיפוש</p>
         <button type="button" class="secondary-button" data-testid="empty-reset">איפוס מסננים</button>
       </div>
       <div class="table-wrap" data-testid="table-wrap" tabindex="0" aria-label="טבלת לידים, אפשר לגלול לרוחב">
         <table class="leads" data-testid="leads-table">
-          <caption class="sr-only">כל הלידים, ממוינים לפי עדיפות</caption>
+          <caption class="sr-only" data-testid="table-caption"></caption>
           <thead>
             <tr>
               <th scope="col">מזהה</th>

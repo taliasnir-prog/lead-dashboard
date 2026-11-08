@@ -38,7 +38,7 @@ test('AC-5.7 with 499 leads the 500th is added and saved; then adding is blocked
   await page.getByTestId('field-rep').selectOption('נועה ברק');
   await page.getByTestId('dialog-save').click();
   await expect(page.getByTestId('lead-dialog')).toBeHidden();
-  await expect(page.getByTestId('flash')).toHaveText('הליד L-500 נוסף ונשמר.');
+  await expect(page.getByTestId('flash')).toHaveText('הליד הליד החמש מאות (L-500) נוסף ונשמר.');
   await expect(count(page)).toHaveText('מוצגים 500 מתוך 500 לידים');
 
   await expect(page.getByTestId('add-lead-button')).toBeDisabled();
