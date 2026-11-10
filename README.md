@@ -169,6 +169,8 @@ BASE_URL=https://taliasnir-prog.github.io/lead-dashboard/ npx playwright test --
 
 ## חיבור שיעור 4: Airtable (בפיתוח)
 
+קוד שיעור 4 הועלה לענף `feature/airtable-read-dashboard`. טיוטת השינויים: https://github.com/taliasnir-prog/lead-dashboard/pull/14. אין מיזוג ל-main, ופרסום גרסת שיעור 4 באתר נפרד עדיין ממתין להשלמה.
+
 מצב הקריאה החי מופעל באמצעות `npm start`, ואז `http://127.0.0.1:4318/lead-dashboard/?source=airtable`. Node 22 ומעלה נדרש. העתיקו `airtable.env.example` ל-`.env` ומלאו טוקן עם data.records:read וגישה לבסיס הפיקטיבי בלבד, מזהה בסיס ומזהה טבלה.
 
 הטוקן נקרא רק בשרת. אין להעביר אותו בקוד האתר, בכתובת או ב-GitHub. הוספה, עריכה ואיפוס אינם זמינים במצב Airtable. עדכונים נעשים בבסיס ולחיצה על רענון טוענת אותם מחדש. ברירת המחדל ללא הפרמטר נשארת מצב הדמה המקומי. GitHub Pages אינו מריץ את שרת Node. האתר הציבורי של שיעור 3 נשאר כפי שהוגש. עבודת שיעור 4 נמצאת רק בענף `feature/airtable-read-dashboard`, ותקבל כתובת פרסום נפרדת. אין למזג ל-main או לשנות את האתר של שיעור 3 כל עוד הוא בבדיקה, אלא לפי הוראה מפורשת חדשה של בעל הפרויקט.
