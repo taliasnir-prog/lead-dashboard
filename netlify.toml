@@ -1,0 +1,20 @@
+[build]
+  command = "node scripts/build-public.mjs"
+  publish = "dist"
+[build.environment]
+  NODE_VERSION = "22"
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+[[redirects]]
+  from = "/"
+  to = "/lead-dashboard/?source=airtable"
+  status = 302
+[[redirects]]
+  from = "/lead-dashboard/api/leads"
+  to = "/.netlify/functions/leads"
+  status = 200
+[[redirects]]
+  from = "/lead-dashboard/*"
+  to = "/:splat"
+  status = 200
