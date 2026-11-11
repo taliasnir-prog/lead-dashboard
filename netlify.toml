@@ -10,6 +10,7 @@
   from = "/"
   to = "/lead-dashboard/?source=airtable"
   status = 302
+  force = true
 [[redirects]]
   from = "/lead-dashboard/api/leads"
   to = "/.netlify/functions/leads"
