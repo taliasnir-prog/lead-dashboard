@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {upcomingHolidays} from '../../js/holidays.js';
+test('AC-12.1 sorts upcoming holiday dates, excludes unrelated and old events and limits to three',()=>{
+const items=[{category:'holiday',date:'2026-11-13',hebrew:'ג'},{category:'holiday',date:'2026-11-11',hebrew:'א'},{category:'holiday',date:'2026-11-12',hebrew:'ב'},{category:'holiday',date:'2026-11-14',hebrew:'ד'},{category:'holiday',date:'2026-11-09',hebrew:'ישן'},{category:'holiday',date:'2026-02-30',title:'invalid'},{category:'parashat',date:'2026-11-10',title:'not a holiday'}];
+assert.deepEqual(upcomingHolidays(items,'2026-11-10').map(x=>x.title),['א','ב','ג']);assert.deepEqual(upcomingHolidays([],'2026-11-10'),[]);assert.throws(()=>upcomingHolidays(null,'2026-11-10'));});

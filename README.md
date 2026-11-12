@@ -166,3 +166,19 @@ BASE_URL=https://taliasnir-prog.github.io/lead-dashboard/ npx playwright test --
 - **עדכון האפיון לגרסה 1.2 נכתב אחרי הקוד** של שלב השמירה, ולא לפניו כמו שדורש סעיף 7 ב-Practice. הוא נשמר ב-commit נפרד שנכנס לפני ה-commit של הקוד.
 - שני פערים שנמצאו בסקירה המסכמת תוקנו לפני שהיה ריפו. ה-Issues שלהם נפתחו אחרי הקמת הריפו.
 - שני באגים מסקירת Pull Request #3 (#4 ו-#5) עברו לפי הסדר הנכון: קודם Issue, אחר כך האפיון ואחר כך הקוד.
+
+## חיבור שיעור 4: Airtable
+
+קוד שיעור 4 הועלה לענף `feature/airtable-read-dashboard`. טיוטת השינויים: https://github.com/taliasnir-prog/lead-dashboard/pull/14. אין מיזוג ל-main. גרסת שיעור 4 פורסמה בנפרד: https://aido-lead-dashboard-lesson4.netlify.app/
+
+מצב הקריאה החי מופעל באמצעות `npm start`, ואז `http://127.0.0.1:4318/lead-dashboard/?source=airtable`. Node 22 ומעלה נדרש. העתיקו `airtable.env.example` ל-`.env` ומלאו טוקן עם data.records:read וגישה לבסיס הפיקטיבי בלבד, מזהה בסיס ומזהה טבלה.
+
+הטוקן נקרא רק בשרת. אין להעביר אותו בקוד האתר, בכתובת או ב-GitHub. הוספה, עריכה ואיפוס אינם זמינים במצב Airtable. עדכונים נעשים בבסיס ולחיצה על רענון טוענת אותם מחדש. ברירת המחדל ללא הפרמטר נשארת מצב הדמה המקומי. GitHub Pages אינו מריץ את שרת Node. האתר הציבורי של שיעור 3 נשאר כפי שהוגש. עבודת שיעור 4 נמצאת רק בענף `feature/airtable-read-dashboard`, ופורסמה בכתובת נפרדת. אין למזג ל-main או לשנות את האתר של שיעור 3 כל עוד הוא בבדיקה, אלא לפי הוראה מפורשת חדשה של בעל הפרויקט.
+
+### בונוס API ציבורי
+
+במצב Airtable מוצגים שלושה מועדים קרובים מלוח Hebcal לישראל. הבקשה ציבורית וללא טוקן, ואינה מעבירה פרטי לידים. התצוגה עצמאית: כשל במקור המועדים לא חוסם את הלידים. `js/holidays.js` מכיל את הבקשה ואת הסינון. מקור: https://www.hebcal.com/home/195/jewish-calendar-rest-api
+
+### פרסום ב-Netlify
+
+`netlify.toml`, `netlify/functions/leads.mjs` ו-`scripts/build-public.mjs` מוכנים לפרסום. הבנייה מעתיקה לתיקיית dist רק 7 קבצים ציבוריים. הטוקן מוגדר במשתני הסביבה של הפונקציה בלבד, יחד עם AIRTABLE_BASE_ID ו-AIRTABLE_TABLE_ID. הפרויקט הנפרד aido-lead-dashboard-lesson4 פורסם ב-11.11.2026 מהענף של שיעור 4. הטוקן נשמר כמשתנה סודי ב-Netlify. הכתובת הראשית מפנה למצב Airtable. נבדקו באתר החי טעינת 3 לידים, רענון, סינון Google, פרטי ליד לקריאה בלבד ו-3 מועדים מ-Hebcal. בקשת POST נדחית ב-405 וקבצים פרטיים מחזירים 404.

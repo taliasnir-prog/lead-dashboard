@@ -8,7 +8,8 @@
     "test": "node --test \"tests/logic/**/*.test.js\"",
     "test:ui": "playwright test",
     "test:all": "npm test && npm run test:ui",
-    "test:ui:chromium": "playwright test --project=chromium-desktop --project=chromium-mobile"
+    "test:ui:chromium": "playwright test --project=chromium-desktop --project=chromium-mobile",
+    "start": "node server.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
