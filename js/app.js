@@ -6,13 +6,10 @@ import {
   toLocalDateString, computeMetrics, countBySource, sortLeadsBy, filterLeads, getPriority, isOverdue,
   formatCurrency, formatDate, validateLeadForm, addLead, canAddLead, applyEdit, LIMIT_MESSAGE,
   PRIORITY, STATUSES, SOURCES, REPS, INTEREST_LEVELS, EMPTY_FILTERS, ADD_FIELDS, EDIT_FIELDS,
-  SORT_MODES, SORT_LABELS, DEFAULT_SORT, validateLead,
+  SORT_MODES, SORT_LABELS, DEFAULT_SORT,
 } from './logic.js';
 import { createDemoLeads } from './demo-data.js';
-import { showHolidays } from './holidays.js';
 import { getStorage, loadLeads, saveLeads } from './storage.js';
-
-const AIRTABLE_MODE = new URLSearchParams(location.search).get('source') === 'airtable';
 
 const STATUS_CLASS = {
   'חדש': 'st-new',
@@ -63,7 +60,6 @@ function persist() {
 }
 
 function updateStorageNotices() {
-  if (AIRTABLE_MODE) return;
   $('storage-unavailable').hidden = state.saved || state.rejected;
   $('storage-rejected').hidden = !state.rejected;
   $('storage-invalid').hidden = !state.invalid;
@@ -71,10 +67,10 @@ function updateStorageNotices() {
 
 /** At 500 leads the add button is disabled and the limit is explained; editing still works. */
 function updateAddAvailability() {
-  const can = !AIRTABLE_MODE && canAddLead(state.leads);
+  const can = canAddLead(state.leads);
   $('add-lead-button').disabled = !can;
   const note = $('add-limit');
-  note.hidden = AIRTABLE_MODE || can;
+  note.hidden = can;
   note.textContent = can ? '' : LIMIT_MESSAGE;
 }
 
@@ -435,13 +431,8 @@ function openDialog(mode, lead, opener) {
     fieldEl('status').value = 'חדש';
     fieldEl('interest').value = 'בינונית';
   }
-  if (AIRTABLE_MODE) {
-    for (const input of form.querySelectorAll('input, select, textarea')) input.disabled = true;
-    $('dialog-save').hidden = true;
-    $('dialog-cancel').textContent = 'סגירה';
-  }
   dialog.showModal();
-  (AIRTABLE_MODE ? $('dialog-cancel') : fieldEl(mode === 'add' ? 'name' : 'status')).focus();
+  fieldEl(mode === 'add' ? 'name' : 'status').focus();
 }
 
 function readForm(mode) {
@@ -451,7 +442,6 @@ function readForm(mode) {
 
 function handleSave(event) {
   event.preventDefault();
-  if (AIRTABLE_MODE) return;
   const { mode } = dialogState;
   const result = validateLeadForm(readForm(mode), mode);
   if (!result.valid) {
@@ -537,7 +527,7 @@ function setupDialog() {
   dialog.addEventListener('close', afterClose);
   $('show-lead').addEventListener('click', showAddedLead);
   $('add-lead-button').addEventListener('click', (event) => {
-    if (!AIRTABLE_MODE && canAddLead(state.leads)) openDialog('add', null, event.currentTarget);
+    if (canAddLead(state.leads)) openDialog('add', null, event.currentTarget);
   });
   document.querySelector('[data-testid="leads-table"] tbody').addEventListener('click', (event) => {
     const button = event.target.closest('[data-testid="details-button"]');
@@ -553,7 +543,6 @@ const resetDialog = $('reset-dialog');
 let resetConfirmed = false;
 
 function confirmReset() {
-  if (AIRTABLE_MODE) return;
   resetConfirmed = true;
   resetFilterInputs();
   clearFlash();
@@ -590,7 +579,7 @@ function setupReset() {
 
 // ---------- Start ----------
 
-async function init() {
+function init() {
   state.today = toLocalDateString(new Date());
   // The sort is not saved: every load starts from the default, even if the browser restored the field.
   $('sort-mode').value = DEFAULT_SORT;
@@ -599,36 +588,6 @@ async function init() {
   setupPriorityHelp();
   setupDialog();
   setupReset();
-  if (AIRTABLE_MODE) {
-    void showHolidays();
-    $('reset-button').hidden = true;
-    $('add-lead-button').hidden = true;
-    $('storage-note').textContent = 'מקור הנתונים: Airtable. תצוגה לקריאה בלבד. לעדכון הנתונים לחצו על רענון.';
-    const refresh = el('button', {className:'secondary-button',text:'רענון מ-Airtable',attrs:{type:'button','data-testid':'airtable-refresh'}});
-    const notice = el('p', {className:'notice',attrs:{role:'status','data-testid':'airtable-status'}});
-    $('storage-bar').append(refresh);
-    $('storage-bar').after(notice);
-    async function reloadRemote() {
-      refresh.disabled = true;
-      notice.textContent = 'טוען נתונים מ-Airtable...';
-      setLeads([]);
-      try {
-        const response = await fetch('api/leads', {cache:'no-store',signal:AbortSignal.timeout(20000)});
-        if (!response.ok) throw new Error('load');
-        const data = await response.json();
-        if (data.source !== 'airtable' || !Array.isArray(data.leads) || data.leads.length > 500 ||
-            data.leads.some(l=>!validateLead(l).valid) || new Set(data.leads.map(l=>l.id)).size !== data.leads.length) throw new Error('data');
-        state.today = toLocalDateString(new Date());
-        setLeads(data.leads);
-        notice.textContent = 'נטענו ' + data.leads.length + ' לידים מ-Airtable. טעינה אחרונה: ' + new Date().toLocaleTimeString('he-IL');
-      } catch {
-        notice.textContent = 'לא ניתן לטעון נתונים מ-Airtable. בדקו את החיבור, ההרשאות ותקינות הרשומות ולחצו על רענון.';
-      } finally {refresh.disabled = false;}
-    }
-    refresh.addEventListener('click', reloadRemote);
-    await reloadRemote();
-    return;
-  }
   state.storage = getStorage(window);
   const loaded = loadLeads(state.storage, state.today);
   state.canRead = loaded.canRead;
